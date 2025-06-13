@@ -8,6 +8,10 @@ It uses OverlayFS to layer your mods on top of the base game folder, keeping it 
 
 Moma avoids dependency on Windows-native tools like Mod Organizer 2 by leaning fully into native Linux features. It's created for a minimal, terminal mod management with all the power of other GUI managers.
 
+## Usage
+
+Probably shouldn't right now, first fish script is there to test the concept, currently writing it in rust.
+
 ## Features
 - Automatic SKSE installation and integration
 - Proton-compatible launching with custom wineprefix
