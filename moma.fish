@@ -37,6 +37,7 @@ end
 
 # Copy mods into upper dir
 for mod in $moma_path/mods/*
+
     if test -d "$mod"
         cp -rn "$mod/"* $overlay_upper_dir
     end
@@ -50,4 +51,15 @@ sudo mount -t overlay overlay \
     -olowerdir=$overlay_lower_dir,upperdir=$overlay_upper_dir,workdir=$overlay_work_dir \
     $active_dir
 
-env WINEPREFIX=$moma_path/.wine wine "$active_dir/skse64_loader.exe"
+set -l launcher_path "$HOME/.moma/active/launch-skyrim"
+set -l proton "$HOME/.steam/steam/steamapps/common/Proton Hotfix/proton"
+set -l skse_loader "$HOME/.moma/active/skse64_loader.exe"
+
+echo "#!/usr/bin/env bash
+export STEAM_COMPAT_DATA_PATH=\"\$HOME/.moma/.proton\"
+export STEAM_COMPAT_CLIENT_INSTALL_PATH=\"\$HOME/.steam/steam\"
+
+cd \"\$HOME/.moma/active\"
+\"$proton\" run \"\$HOME/.moma/active/skse64_loader.exe\"" >$launcher_path
+
+chmod +x $launcher_path
