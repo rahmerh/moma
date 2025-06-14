@@ -2,25 +2,27 @@
   <img src="assets/banner.png" alt="Moma banner" width="100%" />
 </p>
 
-Moma is a linux first, CLI **mo**d **ma**nager.
+**Moma** is a Linux-first, CLI **mo**d **ma**nager.
 
-It uses OverlayFS to layer your mods on top of the base game folder, keeping it both clean and untouched. All mods are kept separately for easy management and merged into the mounted folder. A simple unmount will revert everything.
+It uses OverlayFS to layer mods cleanly on top of the base game folder—keeping it untouched and easily reversible. Mods stay isolated and are only merged during runtime. A single unmount resets everything.
 
-Moma avoids dependency on Windows-native tools like Mod Organizer 2 by leaning fully into native Linux features. It's created for a minimal, terminal mod management with all the power of other GUI managers.
+Moma avoids Windows-native tools like Mod Organizer 2 and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
+
+---
 
 ## Usage
 
-Moma is still under active development. The current version is a functional prototype in Fish, with a Rust rewrite in progress.
+Moma is under active development. The current prototype is a Fish script. A full Rust rewrite is in progress.
 
-## Features
-- Prototype in Fish: mounts mods using OverlayFS
+---
 
 ## Roadmap
-Currently working on:
-- First PoC (Creates folder structure, mounts folders and launches game, written in rust, just for skyrim right now)
 
-Future plans:
-1. Mod installation/uninstallation commands
-2. Nexus download handler
+### In progress
+- Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+
+### Planned
+1. Mod installation and removal
+2. Nexus download integration
 3. FOMOD CLI wizard
-4. Much, much more...
+
