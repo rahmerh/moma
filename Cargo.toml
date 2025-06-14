@@ -6,7 +6,9 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.98"
 clap = { version = "4.5.40", features = ["derive"] }
+dialoguer = "0.11.0"
 directories = "6.0.0"
 dirs-next = "2.0.0"
+owo-colors = "4.2.1"
 serde = { version = "1.0.219", features = ["derive"] }
 toml = "0.8.23"

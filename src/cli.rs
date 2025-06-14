@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use crate::commands::Init;
+use crate::{commands::Init, config::Config};
 
 #[derive(Parser)]
 #[command(name = "moma", version)]
@@ -15,9 +15,9 @@ pub enum Command {
 }
 
 impl Cli {
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         match &self.command {
-            Some(Command::Init(cmd)) => cmd.run(),
+            Some(Command::Init(cmd)) => cmd.run(config),
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;
