@@ -1,13 +1,29 @@
 use clap::{Parser, Subcommand};
 
-#[derive(Parser, Debug)]
-#[command(name = "packsy", version)]
-pub struct MomaCli {
+use crate::commands::Init;
+
+#[derive(Parser)]
+#[command(name = "moma", version)]
+pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand)]
 pub enum Command {
-    Init,
+    Init(Init),
+}
+
+impl Cli {
+    pub fn run(&self) -> anyhow::Result<()> {
+        match &self.command {
+            Some(Command::Init(cmd)) => cmd.run(),
+            None => {
+                use clap::CommandFactory;
+                Cli::command().print_help()?;
+                println!();
+                Ok(())
+            }
+        }
+    }
 }

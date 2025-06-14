@@ -2,12 +2,14 @@ mod cli;
 mod commands;
 mod config;
 
+use std::process::ExitCode;
+
 use clap::Parser;
-use cli::{Command, MomaCli};
-use commands::init;
 use config::Config;
 
-fn main() {
+use crate::cli::Cli;
+
+fn main() -> ExitCode {
     let config_path = dirs_next::config_dir().unwrap().join("moma/config.toml");
 
     if !config_path.exists() {
@@ -17,14 +19,11 @@ fn main() {
             .expect("Failed to save config");
     }
 
-    let args = MomaCli::parse();
-
-    match args.command {
-        Some(Command::Init) => {
-            init::run();
-        }
-        None => {
-            eprintln!("No command provided. Use --help.");
+    match Cli::parse().run() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            println!("Error!: {e:?}");
+            ExitCode::FAILURE
         }
     }
 }
