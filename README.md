@@ -8,13 +8,9 @@ It uses OverlayFS to layer mods cleanly on top of the base game folder—keeping
 
 Moma avoids Windows-native tools like Mod Organizer 2 and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
 
----
-
 ## Usage
 
 Moma is under active development. The current prototype is a Fish script. A full Rust rewrite is in progress.
-
----
 
 ## Roadmap
 
@@ -23,6 +19,7 @@ Moma is under active development. The current prototype is a Fish script. A full
 
 ### Planned
 1. Mod installation and removal
-2. Nexus download integration
-3. FOMOD CLI wizard
+2. Declarative mod installation
+3. Nexus download integration
+4. FOMOD CLI wizard
 
