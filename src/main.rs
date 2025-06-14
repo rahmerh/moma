@@ -2,6 +2,7 @@ mod cli;
 mod commands;
 mod config;
 mod games;
+mod theme;
 
 use std::process::ExitCode;
 

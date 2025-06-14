@@ -10,7 +10,7 @@ impl GameProfile for Skyrim {
     }
 
     fn default_path(&self) -> PathBuf {
-        PathBuf::from("~/.local/share/Steam/steamapps/common/Skyrim")
+        PathBuf::from("~/.local/share/Steam/steamapps/common/Skyrim Special Edition")
     }
 
     fn setup_modding(&self) -> anyhow::Result<()> {
