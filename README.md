@@ -10,15 +10,17 @@ Moma avoids dependency on Windows-native tools like Mod Organizer 2 by leaning f
 
 ## Usage
 
-Probably shouldn't right now, first fish script is there to test the concept, currently writing it in rust.
+Moma is still under active development. The current version is a functional prototype in Fish, with a Rust rewrite in progress.
 
 ## Features
-- Automatic SKSE installation and integration
-- Proton-compatible launching with custom wineprefix
+- Prototype in Fish: mounts mods using OverlayFS
 
 ## Roadmap
-1. First PoC (Creates folder structure, mounts folders and launches game, written in rust, just for skyrim right now)
-2. Mod installation/uninstallation commands
-3. Nexus download handler
-4. FOMOD CLI wizard
-5. Much, much more...
+Currently working on:
+- First PoC (Creates folder structure, mounts folders and launches game, written in rust, just for skyrim right now)
+
+Future plans:
+1. Mod installation/uninstallation commands
+2. Nexus download handler
+3. FOMOD CLI wizard
+4. Much, much more...
