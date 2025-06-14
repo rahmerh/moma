@@ -17,7 +17,7 @@ Probably shouldn't right now, first fish script is there to test the concept, cu
 - Proton-compatible launching with custom wineprefix
 
 ## Roadmap
-1. First PoC (Creates folder structure, mounts folders and launches game, written in rust)
+1. First PoC (Creates folder structure, mounts folders and launches game, written in rust, just for skyrim right now)
 2. Mod installation/uninstallation commands
 3. Nexus download handler
 4. FOMOD CLI wizard
