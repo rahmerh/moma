@@ -1,7 +1,7 @@
 [package]
 name = "moma"
 version = "0.2.0"
-edition = "2025"
+edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
