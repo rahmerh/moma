@@ -8,6 +8,10 @@ It uses OverlayFS to layer mods cleanly on top of the base game folder—keeping
 
 Moma avoids Windows-native tools like Mod Organizer 2 and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
 
+## Supported games
+
+- Skyrim (SE and AE)
+
 ## Usage
 
 ### Initialize
