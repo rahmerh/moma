@@ -4,9 +4,11 @@
 
 **Moma** is a Linux-first, CLI **mo**d **ma**nager.
 
-It uses OverlayFS to layer mods cleanly on top of the base game folder—keeping it untouched and easily reversible. Mods stay isolated and are only merged during runtime. A single unmount resets everything.
+Moma automates everything you need to start modding your games on Linux. It takes care of downloading mods, setting up tools, and managing your configuration in a simple, declarative format—so your mod setup stays clean, trackable, and easy to reproduce.
 
-Moma avoids Windows-native tools like Mod Organizer 2 and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
+To keep your game installation untouched, Moma builds a temporary environment where mods are layered only when you launch the game. Your base files remain unchanged, and mods don’t need to be installed directly into the game folder.
+
+Moma avoids Windows-native mod management tools and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
 
 ## Supported games
 
