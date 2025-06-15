@@ -5,6 +5,8 @@ use std::{collections::HashMap, path::PathBuf};
 pub struct Config {
     pub games: HashMap<String, GameConfig>,
     pub work_dir: PathBuf,
+    pub mods_sub_dir: String,
+    pub cache_sub_dir: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -47,6 +49,8 @@ impl Default for Config {
         Self {
             games: HashMap::new(),
             work_dir,
+            mods_sub_dir: "mods".to_string(),
+            cache_sub_dir: ".cache".to_string(),
         }
     }
 }

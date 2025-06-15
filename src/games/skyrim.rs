@@ -8,7 +8,7 @@ use std::{
     collections::HashMap,
     fs::{self, File, create_dir_all},
     io::copy,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -29,7 +29,7 @@ static SKSE_DOWNLOADS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| 
 });
 
 impl SkyrimSe {
-    fn determine_game_version(&self, game_path: &PathBuf) -> anyhow::Result<String> {
+    fn determine_game_version(&self, game_path: &Path) -> anyhow::Result<String> {
         let expanded = shellexpand::tilde(&game_path.to_string_lossy()).to_string();
 
         let map = FileMap::open(&format!("{}/{}", expanded, self.game_executable()))
@@ -66,8 +66,10 @@ impl GameProfile for SkyrimSe {
     fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
         let theme = theme::default_theme();
 
-        let cache_dir = config.work_dir.join(".cache").expand();
-        let mods_dir = config.work_dir.join("mods").expand();
+        let game_work_dir = config.work_dir.join(self.name().to_lowercase()).expand();
+
+        let cache_dir = config.work_dir.join(&config.cache_sub_dir);
+        let mods_dir = game_work_dir.join(&config.mods_sub_dir);
 
         let skse_output_dir = mods_dir.join("skse");
         let skse_archive_path = cache_dir.join("skse.7z");
@@ -91,7 +93,7 @@ impl GameProfile for SkyrimSe {
             }
         }
 
-        println!("{}", "\nSetting up SKSE".bold().cyan());
+        println!("{}", "\nSetting up SKSE\n".bold().cyan());
 
         create_dir_all(&cache_dir)?;
         create_dir_all(&mods_dir)?;
@@ -114,6 +116,14 @@ impl GameProfile for SkyrimSe {
         extract_archive(&skse_archive_path, &skse_output_dir, true)?;
 
         print_inline_status("Done!")?;
+
+        println!(
+            "{}",
+            "\n\nSKSE installed successfully\n"
+                .bold()
+                .underline()
+                .cyan()
+        );
 
         Ok(())
     }

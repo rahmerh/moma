@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use crate::{
     config::{Config, GameConfig},
     theme,
+    utils::ExpandTilde,
 };
 
 #[derive(Args)]
@@ -39,8 +40,7 @@ impl Init {
                     "Configuration for {} already exists. Reconfigure?",
                     game_name.yellow()
                 ))
-                .interact()
-                .unwrap();
+                .interact()?;
 
             if !confirmation {
                 println!("{}", "Exiting setup.".yellow());
@@ -48,18 +48,18 @@ impl Init {
             }
         }
 
+        let default_game_path = game.default_path().expand();
         let path = Input::with_theme(&theme)
             .with_prompt(format!("Enter installation path for {}", game_name.cyan()))
-            .default(game.default_path().to_string_lossy().to_string())
+            .default(default_game_path.display().to_string())
             .validate_with(|input: &String| {
-                let expanded = shellexpand::tilde(input).to_string();
-                let path = Path::new(&expanded);
+                let path = Path::new(input.trim());
 
                 if !path.exists() {
                     return Err("Path does not exist.");
                 }
 
-                if !path.join(game.game_executable()).exists() {
+                if !path.join(game.game_executable()).is_file() {
                     return Err("Game executable not found in this folder.");
                 }
 
@@ -67,10 +67,20 @@ impl Init {
             })
             .interact_text()?;
 
+        let expanded_path = PathBuf::from(path.trim()).expand();
+
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
         println!("Game: \"{}\"", game_name.bold());
-        println!("Path: \"{}\"", path.bold());
+        println!("Path: \"{}\"", expanded_path.display().bold());
+        println!(
+            "Moma's game working directory: \"{}\"",
+            config
+                .work_dir
+                .join(game.name().to_lowercase())
+                .display()
+                .bold()
+        );
         println!();
 
         let confirmed = Confirm::with_theme(&theme)
@@ -83,15 +93,24 @@ impl Init {
         }
 
         let game_config = GameConfig {
-            path: PathBuf::from(path),
+            path: expanded_path,
         };
 
         config.games.insert(game_name.to_string(), game_config);
         config.save()?;
 
-        println!("{}", "\nConfiguration saved successfully.\n".bold().cyan());
+        println!(
+            "{}",
+            "\nConfiguration saved successfully\n"
+                .bold()
+                .underline()
+                .cyan()
+        );
 
-        let saved_config = config.games.get(game_name).unwrap();
+        let saved_config = config
+            .games
+            .get(game_name)
+            .expect("Could not store game configuration.");
         game.setup_modding(config, saved_config)?;
 
         Ok(())
