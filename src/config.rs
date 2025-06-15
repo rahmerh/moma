@@ -1,12 +1,15 @@
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
+use crate::utils::ExpandTilde;
+
+pub const CACHE_DIR_NAME: &str = ".cache";
+pub const MODS_DIR_NAME: &str = "mods";
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub games: HashMap<String, GameConfig>,
     pub work_dir: PathBuf,
-    pub mods_sub_dir: String,
-    pub cache_sub_dir: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,7 +27,8 @@ impl Config {
     pub fn load_or_default() -> Self {
         let path = Self::default_path();
         if path.exists() {
-            let content = std::fs::read_to_string(&path).expect("Failed to read config");
+            let content = std::fs::read_to_string(&path)
+                .unwrap_or_else(|e| panic!("Failed to read config at {}: {}", path.display(), e));
             toml::from_str(&content).expect("Failed to parse config")
         } else {
             let config = Self::default();
@@ -44,13 +48,11 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let path = shellexpand::tilde("~/.moma").to_string();
+        let path = PathBuf::from("~/.moma").expand().display().to_string();
         let work_dir = PathBuf::from(path);
         Self {
             games: HashMap::new(),
             work_dir,
-            mods_sub_dir: "mods".to_string(),
-            cache_sub_dir: ".cache".to_string(),
         }
     }
 }

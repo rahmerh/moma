@@ -12,7 +12,7 @@ use std::{
 };
 
 use crate::{
-    config::{Config, GameConfig},
+    config::{CACHE_DIR_NAME, Config, GameConfig, MODS_DIR_NAME},
     theme,
     utils::{ExpandTilde, extract_archive, print_inline_status},
 };
@@ -68,8 +68,8 @@ impl GameProfile for SkyrimSe {
 
         let game_work_dir = config.work_dir.join(self.name().to_lowercase()).expand();
 
-        let cache_dir = config.work_dir.join(&config.cache_sub_dir);
-        let mods_dir = game_work_dir.join(&config.mods_sub_dir);
+        let cache_dir = game_work_dir.join(CACHE_DIR_NAME);
+        let mods_dir = game_work_dir.join(MODS_DIR_NAME);
 
         let skse_output_dir = mods_dir.join("skse");
         let skse_archive_path = cache_dir.join("skse.7z");

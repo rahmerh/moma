@@ -10,7 +10,12 @@ Moma avoids Windows-native tools like Mod Organizer 2 and fully embraces native 
 
 ## Usage
 
-Moma is under active development. The current prototype is a Fish script. A full Rust rewrite is in progress.
+### Initialize
+```sh
+moma init
+```
+
+Starts the moma game initialize wizard. Allows you to pick a game and set up the paths, configuration and minimal libraries required for you to start modding.
 
 ## Roadmap
 
@@ -18,8 +23,9 @@ Moma is under active development. The current prototype is a Fish script. A full
 - Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
 
 ### Planned
-1. Mod installation and removal
-2. Declarative mod installation
-3. Nexus download integration
-4. FOMOD CLI wizard
+1. Installation guide (Makefile + instructions)
+2. Mod installation and removal
+3. Declarative mod installation
+4. Nexus download integration
+5. FOMOD CLI wizard
 

@@ -3,7 +3,11 @@ use clap::{Parser, Subcommand};
 use crate::{commands::Init, config::Config};
 
 #[derive(Parser)]
-#[command(name = "moma", version)]
+#[command(
+    name = "moma",
+    version,
+    about = "Declarative mod manager that automates game- and mod setup"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
@@ -11,6 +15,7 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    #[command(about = "Start Moma game setup wizard")]
     Init(Init),
 }
 

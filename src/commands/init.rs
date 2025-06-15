@@ -68,6 +68,7 @@ impl Init {
             .interact_text()?;
 
         let expanded_path = PathBuf::from(path.trim()).expand();
+        let game_working_dir = config.work_dir.join(game_name.to_lowercase());
 
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
@@ -75,11 +76,7 @@ impl Init {
         println!("Path: \"{}\"", expanded_path.display().bold());
         println!(
             "Moma's game working directory: \"{}\"",
-            config
-                .work_dir
-                .join(game.name().to_lowercase())
-                .display()
-                .bold()
+            game_working_dir.display().bold()
         );
         println!();
 
