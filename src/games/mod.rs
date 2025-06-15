@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     config::{Config, GameConfig},
-    games::skyrim::Skyrim,
+    games::skyrim::SkyrimSe,
 };
 
 pub mod skyrim;
@@ -17,5 +17,5 @@ pub trait GameProfile {
 }
 
 pub fn get_supported_games() -> Vec<Box<dyn GameProfile>> {
-    vec![Box::new(Skyrim {})]
+    vec![Box::new(SkyrimSe {})]
 }

@@ -89,7 +89,7 @@ impl Init {
         config.games.insert(game_name.to_string(), game_config);
         config.save()?;
 
-        println!("{}", "Configuration saved successfully.".cyan());
+        println!("{}", "\nConfiguration saved successfully.\n".bold().cyan());
 
         let saved_config = config.games.get(game_name).unwrap();
         game.setup_modding(config, saved_config)?;

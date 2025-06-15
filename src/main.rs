@@ -3,6 +3,7 @@ mod commands;
 mod config;
 mod games;
 mod theme;
+mod utils;
 
 use clap::Parser;
 use owo_colors::OwoColorize;
