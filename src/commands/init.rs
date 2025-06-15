@@ -1,82 +1,30 @@
 use clap::Args;
-use dialoguer::{Confirm, Input, Select, theme::ColorfulTheme};
+use dialoguer::{Confirm, Input, Select};
 use owo_colors::OwoColorize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::{
     config::{Config, GameConfig},
-    games::GameProfile,
     theme,
 };
 
 #[derive(Args)]
 pub struct Init;
 
-fn determine_game_path(theme: &ColorfulTheme, game: &dyn GameProfile) -> anyhow::Result<PathBuf> {
-    let game_name = game.name();
-    let mut input = game.default_path().to_string_lossy().to_string();
-
-    loop {
-        input = Input::with_theme(theme)
-            .with_prompt(format!("Enter installation path for {}", game_name.cyan()))
-            .with_initial_text(&input)
-            .interact_text()?;
-
-        let expanded = if input.starts_with('~') {
-            match dirs_next::home_dir() {
-                Some(home) => input.replacen("~", &home.to_string_lossy(), 1),
-                None => input.clone(),
-            }
-        } else {
-            input.clone()
-        };
-
-        let path = PathBuf::from(expanded);
-
-        if !path.exists() {
-            eprintln!(
-                "{}\n  {}",
-                "Invalid folder path!".red().bold(),
-                path.to_string_lossy().red()
-            );
-            continue;
-        }
-
-        let skyrim_exe = path.join("SkyrimSE.exe");
-        if !skyrim_exe.exists() {
-            eprintln!(
-                "{}\n  {}",
-                "SkyrimSE.exe not found in this directory!".red().bold(),
-                skyrim_exe.to_string_lossy().red()
-            );
-            continue;
-        }
-
-        return Ok(path);
-    }
-}
-
 impl Init {
     pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
-        println!(
-            "\n{}\n",
-            "================= MOMA INITIAL SETUP ================="
-                .bold()
-                .underline()
-                .cyan()
-        );
+        println!("\n{}\n", "Moma initial setup".bold().underline().cyan());
 
         let theme = theme::default_theme();
         let games = crate::games::get_supported_games();
         let labels: Vec<String> = games.iter().map(|g| g.name().to_string()).collect();
 
-        println!("{}", "Available Games".bold().cyan());
+        println!("{}", "Available games".bold().cyan());
         let selection = Select::with_theme(&theme)
             .items(&labels)
             .default(0)
             .interact()?;
         let game = &games[selection];
-
         let game_name = game.name();
 
         println!(
@@ -100,12 +48,29 @@ impl Init {
             }
         }
 
-        let path = determine_game_path(&theme, game.as_ref()).expect("test");
+        let path = Input::with_theme(&theme)
+            .with_prompt(format!("Enter installation path for {}", game_name.cyan()))
+            .default(game.default_path().to_string_lossy().to_string())
+            .validate_with(|input: &String| {
+                let expanded = shellexpand::tilde(input).to_string();
+                let path = Path::new(&expanded);
+
+                if !path.exists() {
+                    return Err("Path does not exist.");
+                }
+
+                if !path.join(game.game_executable()).exists() {
+                    return Err("Game executable not found in this folder.");
+                }
+
+                Ok(())
+            })
+            .interact_text()?;
 
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
         println!("Game: \"{}\"", game_name.bold());
-        println!("Path: \"{}\"", path.to_string_lossy().bold());
+        println!("Path: \"{}\"", path.bold());
         println!();
 
         let confirmed = Confirm::with_theme(&theme)
@@ -117,12 +82,18 @@ impl Init {
             return Ok(());
         }
 
-        let game_config = GameConfig { game_path: path };
+        let game_config = GameConfig {
+            path: PathBuf::from(path),
+        };
 
         config.games.insert(game_name.to_string(), game_config);
         config.save()?;
 
         println!("{}", "Configuration saved successfully.".cyan());
+
+        let saved_config = config.games.get(game_name).unwrap();
+        game.setup_modding(config, saved_config)?;
+
         Ok(())
     }
 }

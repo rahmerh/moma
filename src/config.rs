@@ -4,11 +4,12 @@ use std::{collections::HashMap, path::PathBuf};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub games: HashMap<String, GameConfig>,
+    pub work_dir: PathBuf,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameConfig {
-    pub game_path: PathBuf,
+    pub path: PathBuf,
 }
 
 impl Config {
@@ -41,8 +42,11 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
+        let path = shellexpand::tilde("~/.moma").to_string();
+        let work_dir = PathBuf::from(path);
         Self {
             games: HashMap::new(),
+            work_dir,
         }
     }
 }

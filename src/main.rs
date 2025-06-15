@@ -4,20 +4,19 @@ mod config;
 mod games;
 mod theme;
 
-use std::process::ExitCode;
-
 use clap::Parser;
+use owo_colors::OwoColorize;
 
 use crate::{cli::Cli, config::Config};
 
-fn main() -> ExitCode {
+fn main() -> anyhow::Result<()> {
+    std::panic::set_hook(Box::new(|info| {
+        eprintln!("{} {}", "Fatal error:".red().bold(), info);
+    }));
+
     let mut config = Config::load_or_default();
 
-    match Cli::parse().run(&mut config) {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(e) => {
-            println!("Error!: {e:?}");
-            ExitCode::FAILURE
-        }
-    }
+    Cli::parse().run(&mut config)?;
+
+    Ok(())
 }
