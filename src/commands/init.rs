@@ -31,11 +31,12 @@ impl Init {
         let game_key = game.name().to_lowercase();
         let game_ref = &*game;
         let game_install_dir = determine_game_installation_dir(game_ref, &steam_dir, &theme)?;
-        let proton_dir = determine_proton(game_ref, &theme)?;
+        let proton_dir = determine_proton(&steam_dir, game_ref, &theme)?;
 
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
         println!("Game: \"{}\"", &game.name().bold());
+        println!("Proton path: \"{}\"", &proton_dir.display().bold());
         println!("Path: \"{}\"", game_install_dir.display().bold());
         println!(
             "Moma's game working directory: \"{}\"",
@@ -55,7 +56,7 @@ impl Init {
         let game_config = GameConfig {
             path: game_install_dir,
             name: game_key.clone(),
-            proton_version: proton_dir.display().to_string(),
+            proton_dir,
         };
 
         config.games.insert(game_key.clone(), game_config);
@@ -151,10 +152,12 @@ fn determine_game_installation_dir(
     Ok(PathBuf::from(path.trim()).expand())
 }
 
-fn determine_proton(game: &dyn GameProfile, theme: &ColorfulTheme) -> anyhow::Result<PathBuf> {
-    let proton_dir = dirs_next::home_dir()
-        .unwrap()
-        .join(".steam/steam/steamapps/common");
+fn determine_proton(
+    steam_dir: &Path,
+    game: &dyn GameProfile,
+    theme: &ColorfulTheme,
+) -> anyhow::Result<PathBuf> {
+    let proton_dir = steam_dir.join("steamapps/common");
 
     let entries = std::fs::read_dir(&proton_dir)?
         .filter_map(Result::ok)

@@ -66,6 +66,10 @@ impl GameProfile for SkyrimSe {
         "SkyrimSE.exe"
     }
 
+    fn game_mod_executable(&self) -> &'static str {
+        "skse64_loader.exe"
+    }
+
     fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
         let theme = theme::default_theme();
 
@@ -93,6 +97,8 @@ impl GameProfile for SkyrimSe {
 
             if confirmed {
                 fs::remove_dir_all(&skse_output_dir)?;
+            } else {
+                return Ok(());
             }
         }
 

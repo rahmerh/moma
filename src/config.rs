@@ -21,7 +21,7 @@ pub struct Config {
 pub struct GameConfig {
     pub path: PathBuf,
     pub name: String,
-    pub proton_version: String,
+    pub proton_dir: PathBuf,
 }
 
 impl Config {

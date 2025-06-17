@@ -2,6 +2,7 @@ mod cli;
 mod commands;
 mod config;
 mod games;
+mod os;
 mod overlay;
 mod theme;
 mod utils;
@@ -24,7 +25,7 @@ fn main() {
 
         if cli.debug {
             for cause in err.chain().skip(1) {
-                eprintln!("  caused by: {}", cause);
+                eprintln!(" -> caused by: {}", cause);
             }
         }
         std::process::exit(1);
