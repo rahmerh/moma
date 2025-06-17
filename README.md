@@ -82,20 +82,20 @@ See `docs/config.md` for all options.
 
 ### Done
 ✓ Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+✓ Installation guide (Makefile + instructions)
 
 ### In progress
-Installation guide (Makefile + instructions)
+Mod installation and removal
 
 ### Planned
-1. Mod installation and removal
-2. (Unit) tests
-3. Nexus mods API integration
-4. Load order management
-5. Declarative mod installation
-6. NXS link handler (Nexus-style download URLs)
-7. FOMOD CLI wizard
-8. Logging for debug purposes
-9. Proper usage- and in depth documentation
+➤ (Unit) tests
+➤ Nexus mods API integration
+➤ Load order management
+➤ Declarative mod installation
+➤ NXS link handler (Nexus-style download URLs)
+➤ FOMOD CLI wizard
+➤ Logging for debug purposes
+➤ Proper usage- and in depth documentation
 
 ---
 
