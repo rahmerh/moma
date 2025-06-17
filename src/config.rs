@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::utils::{fs::ExpandTilde, theme};
+use crate::utils::{fs::ExpandTilde, os::chown_dir, theme};
 
 pub const CACHE_DIR_NAME: &str = ".cache";
 pub const MODS_DIR_NAME: &str = "mods";
@@ -101,12 +101,13 @@ impl Config {
         Ok(steam_dir)
     }
 
-    pub fn save(&self) -> std::io::Result<()> {
+    pub fn save(&self) -> anyhow::Result<()> {
         let path = Self::default_path();
         let parent = path.parent().unwrap();
         std::fs::create_dir_all(parent)?;
         let toml = toml::to_string_pretty(self).unwrap();
-        std::fs::write(path, toml)
+        std::fs::write(&path, toml)?;
+        chown_dir(&parent, true)
     }
 }
 

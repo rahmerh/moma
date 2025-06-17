@@ -1,4 +1,4 @@
-use std::{io, os::unix::ffi::OsStrExt, path::Path, process::Command};
+use std::{env, ffi::CString, fs, io, os::unix::ffi::OsStrExt, path::Path, process::Command};
 
 use anyhow::Context;
 use libc::{CLONE_NEWNS, chown, getuid, gid_t, uid_t};
@@ -58,17 +58,44 @@ pub fn drop_privileges() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn chown_dir(dir: &Path) -> anyhow::Result<()> {
-    let c_path = std::ffi::CString::new(dir.as_os_str().as_bytes())
+pub fn chown_dir(dir: &Path, recursive: bool) -> anyhow::Result<()> {
+    let uid = env::var("SUDO_UID")
+        .ok()
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or_else(|| unsafe { libc::getuid() });
+
+    let gid = env::var("SUDO_GID")
+        .ok()
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or_else(|| unsafe { libc::getgid() });
+
+    if recursive {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                chown_dir(&path, true)?;
+            }
+
+            chown_path(&path, uid, gid)?;
+        }
+    }
+
+    chown_path(dir, uid, gid)?;
+    Ok(())
+}
+
+fn chown_path(path: &Path, uid: uid_t, gid: gid_t) -> anyhow::Result<()> {
+    let c_path = CString::new(path.as_os_str().as_bytes())
         .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid path"))?;
 
-    let uid = std::env::var("SUDO_UID")?.parse::<u32>()?;
-    let gid = std::env::var("SUDO_GID")?.parse::<u32>()?;
-    let result = unsafe { chown(c_path.as_ptr(), uid as uid_t, gid as gid_t) };
+    let result = unsafe { chown(c_path.as_ptr(), uid, gid) };
+
     if result != 0 {
         return Err(anyhow::anyhow!(
-            "Failed to chown folder '{}': {}",
-            dir.display(),
+            "Failed to chown '{}': {}",
+            path.display(),
             std::io::Error::last_os_error()
         ));
     }
