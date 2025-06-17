@@ -98,6 +98,16 @@ Mod installation and removal
 - Logging for debug purposes
 - Proper usage- and in depth documentation
 
+## Motivation
+
+There are a few reasons I started building Moma. First, I really liked how Mod Organizer 2 handled mods: no polluting the game folder, strict load order, clear separation. But running MO2 through Wine always felt clunky. I wanted something that felt native, not a Windows tool duct-taped to Linux.
+
+I looked around. There are plenty of Linux CLI mod managers, but none of them scratched the same itch. Most still put mods directly into the game folder, rely on Wine, or depend on external tools to function. They worked, but not the way I wanted them to.
+
+Then I discovered overlayfs, which turned out to be perfect for mod management. It lets you layer mods cleanly, isolate writes into an upper directory, and when paired with a private namespace makes the whole thing seamless and invisible to the user. No performance hit, no mess.
+
+Finally, I thought: why not write it in a language I’ve never used? Might as well learn something from it, which is why I picked rust. Moma might not be the most feature-rich mod manager out there, or the best written one, but it’s one that felt right and that I genuinly want to use.
+
 ---
 
 Want to contribute? Found a bug? File an issue or open a PR. I’ll probably merge it.
