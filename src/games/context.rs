@@ -88,8 +88,15 @@ impl<'a> GameContext<'a> {
         Ok(())
     }
 
-    pub fn validate_sink_is_empty(&self) -> std::io::Result<bool> {
-        Ok(fs::read_dir(self.sink_dir())?.next().is_none())
+    pub fn validate_sink_is_empty(&self) -> anyhow::Result<bool> {
+        let path = self.sink_dir();
+        if !path.exists() {
+            return Ok(true);
+        }
+        Ok(fs::read_dir(path)
+            .with_context(|| "Sink dir could not be found.")?
+            .next()
+            .is_none())
     }
 
     fn reset_overlay_dirs(&self) -> anyhow::Result<()> {
