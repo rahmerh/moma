@@ -88,14 +88,14 @@ See `docs/config.md` for all options.
 Mod installation and removal
 
 ### Planned
-➤ (Unit) tests
-➤ Nexus mods API integration
-➤ Load order management
-➤ Declarative mod installation
-➤ NXS link handler (Nexus-style download URLs)
-➤ FOMOD CLI wizard
-➤ Logging for debug purposes
-➤ Proper usage- and in depth documentation
+- (Unit) tests
+- Nexus mods API integration
+- Load order management
+- Declarative mod installation
+- NXS link handler (Nexus-style download URLs)
+- FOMOD CLI wizard
+- Logging for debug purposes
+- Proper usage- and in depth documentation
 
 ---
 
