@@ -82,6 +82,7 @@ See `docs/config.md` for all options.
 
 ### Done
 ✓ Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+
 ✓ Installation guide (Makefile + instructions)
 
 ### In progress
