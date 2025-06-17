@@ -81,7 +81,7 @@ See `docs/config.md` for all options.
 ## Roadmap
 
 ### Done
-[x] Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+✓ Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
 
 ### In progress
 Installation guide (Makefile + instructions)
