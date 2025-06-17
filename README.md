@@ -23,6 +23,13 @@ moma init
 
 Starts the moma game initialize wizard. Allows you to pick a game and set up the paths, configuration and minimal libraries required for you to start modding.
 
+### Launch a game
+```sh
+moma launch <game>
+```
+
+Launches the game with all mods layered on the game dir. Due to having to mount certain folders, this command needs to be run as su.
+
 ## Roadmap
 
 ### In progress
