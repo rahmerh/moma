@@ -10,6 +10,38 @@ To keep your game installation untouched, Moma builds a temporary environment wh
 
 Moma avoids Windows-native mod management tools and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
 
+## Installation
+
+Make sure you have [Rust](https://www.rust-lang.org/tools/install) installed first. Then clone the repo:
+
+```sh
+git clone https://github.com/rahmerh/moma.git
+cd moma
+```
+
+If you want the latest, stable binary check out main first:
+
+```sh
+git checkout main
+```
+
+If you want latest (and potentially broken), stay on develop.
+
+Run the following to install the binary system-wide:
+```sh
+sudo make install
+```
+
+This will copy the binary to `/usr/local/bin/moma`. You can now run moma from anywhere.
+
+> 💡 **Hint:** You can also install it locally without sudo:
+>
+> ```sh
+> mkdir -p ~/.local/bin
+> cp target/release/moma ~/.local/bin
+> ```
+> Make sure `~/.local/bin` is in your `PATH`.
+
 ## Support
 
 Moma only supports certain game platforms and games (and game versions). This is mostly due to that I'm not going to buy games I won't play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
@@ -29,14 +61,14 @@ Moma only supports certain game platforms and games (and game versions). This is
 moma init
 ```
 
-Starts the moma game initialize wizard. Allows you to pick a game and set up the paths, configuration and minimal libraries required for you to start modding.
+Starts the game setup wizard, guiding you through configuration, paths, and required tools.
 
 ### Launch a game
 ```sh
-moma launch <game>
+sudo moma launch <game>
 ```
 
-Launches the game with all mods layered on the game dir. Due to having to mount certain folders, this command needs to be run as su.
+Launches the game with mods layered in via an overlay. Requires root privileges due to mounting.
 
 ## Configuration
 
@@ -48,17 +80,23 @@ See `docs/config.md` for all options.
 
 ## Roadmap
 
+### Done
+✓ Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+
 ### In progress
-- Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+Installation guide (Makefile + instructions)
 
 ### Planned
-1. Installation guide (Makefile + instructions)
-2. Mod installation and removal
-3. (Unit) tests
-4. Nexus mods API integration
-5. Load order management
-6. Declarative mod installation
-7. Nexus download integration
-8. FOMOD CLI wizard
-9. Logging for debug purposes
-10. Proper usage- and in depth documentation
+1. Mod installation and removal
+2. (Unit) tests
+3. Nexus mods API integration
+4. Load order management
+5. Declarative mod installation
+6. NXS link handler (Nexus-style download URLs)
+7. FOMOD CLI wizard
+8. Logging for debug purposes
+9. Proper usage- and in depth documentation
+
+---
+
+Want to contribute? Found a bug? File an issue or open a PR. I’ll probably merge it.

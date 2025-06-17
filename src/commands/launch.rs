@@ -7,10 +7,13 @@ use owo_colors::OwoColorize;
 use crate::{
     config::Config,
     games::context::GameContext,
-    utils::{fs::copy_dir, os, overlay},
+    utils::{fs::copy_dir, os, overlay, print},
 };
 
 #[derive(Args)]
+#[command(
+    about = "Launch game with configuration. For a list of supported games, run `moma supported`."
+)]
 pub struct Launch {
     /// Name of the game to launch
     pub game_name: String,
@@ -23,7 +26,7 @@ pub struct Launch {
 impl Launch {
     pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         if !os::is_process_root() {
-            bail!("This command must be run as root (UID 0). Try again with `sudo`.");
+            bail!("This command must be run as root. Try again with `sudo`.");
         }
 
         let steam_dir = config.get_steam_dir()?;
@@ -45,6 +48,10 @@ impl Launch {
             }
         }
 
+        println!("Launching {}...", self.game_name.bold());
+
+        print::print_inline_status(&format!("{}", "Mounting game folders...".bold()))?;
+
         os::unshare_current_namespace()?;
         os::remount_current_namespace_as_private()?;
 
@@ -52,6 +59,8 @@ impl Launch {
 
         overlay::mount_overlay_for(&context)
             .with_context(|| format!("Could not mount overlay folders for {}", self.game_name))?;
+
+        print::print_inline_status(&format!("{}", "Copying mods into mounted folder...".bold()))?;
 
         for entry in fs::read_dir(context.mods_dir())? {
             let entry = entry?;
@@ -70,9 +79,14 @@ impl Launch {
             );
         }
 
+        print::print_inline_status(&format!("Launching {}...", self.game_name.bold()))?;
+
         let mut proton_cmd = Command::new(context.proton_binary());
         proton_cmd.current_dir(&context.active_dir());
         proton_cmd.envs(std::env::vars());
+        for (key, value) in &context.game.env {
+            proton_cmd.env(key, value);
+        }
         proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", steam_dir);
         proton_cmd.env("STEAM_COMPAT_DATA_PATH", &context.proton_work_dir());
         proton_cmd.arg("run");
@@ -84,6 +98,8 @@ impl Launch {
         proton_cmd
             .spawn()
             .with_context(|| "Failed to start Proton process")?;
+
+        print::print_inline_status(&format!("{}", "Have fun!".cyan().bold().underline()))?;
 
         Ok(())
     }

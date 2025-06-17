@@ -30,7 +30,7 @@ fn main() {
 }
 
 fn run(cli: &Cli) -> anyhow::Result<()> {
-    let mut config = Config::load_or_default();
+    let mut config = Config::load_or_default()?;
     cli.run(&mut config)?;
     Ok(())
 }

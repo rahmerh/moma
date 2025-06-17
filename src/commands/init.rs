@@ -2,7 +2,11 @@ use anyhow::Context;
 use clap::Args;
 use dialoguer::{Confirm, Input, Select, theme::ColorfulTheme};
 use owo_colors::OwoColorize;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    env,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     config::{Config, GameConfig},
@@ -32,6 +36,14 @@ impl Init {
         let game_install_dir = determine_game_installation_dir(game_ref, &steam_dir, &theme)?;
         let proton_dir = determine_proton(&steam_dir, game_ref, &theme)?;
 
+        let mut env_vars = HashMap::new();
+        env_vars.insert("DISPLAY".to_string(), env::var("DISPLAY")?);
+        env_vars.insert("XDG_RUNTIME_DIR".to_string(), env::var("XDG_RUNTIME_DIR")?);
+
+        if let Ok(val) = env::var("WAYLAND_DISPLAY") {
+            env_vars.insert("WAYLAND_DISPLAY".to_string(), val);
+        }
+
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
         println!("Game: \"{}\"", &game.name().bold());
@@ -56,6 +68,7 @@ impl Init {
             path: game_install_dir,
             name: game_key.clone(),
             proton_dir,
+            env: env_vars,
         };
 
         config.games.insert(game_key.clone(), game_config);
