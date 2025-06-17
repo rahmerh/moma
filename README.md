@@ -4,13 +4,23 @@
 
 **Moma** is a Linux-first, CLI **mo**d **ma**nager.
 
-It uses OverlayFS to layer mods cleanly on top of the base game folder—keeping it untouched and easily reversible. Mods stay isolated and are only merged during runtime. A single unmount resets everything.
+Moma automates everything you need to start modding your games on Linux. It takes care of downloading mods, setting up tools, and managing your configuration in a simple, declarative format, so your mod setup stays clean, trackable, and easy to reproduce.
 
-Moma avoids Windows-native tools like Mod Organizer 2 and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
+To keep your game installation untouched, Moma builds a temporary environment where mods are layered only when you launch the game. Your base files remain unchanged, and mods don’t need to be installed directly into the game folder.
 
-## Supported games
+Moma avoids Windows-native mod management tools and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
 
-- Skyrim (SE and AE)
+## Support
+
+Moma only supports certain game platforms and games (and game versions). This is mostly due to that I'm not going to buy games I won't play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
+
+### Supported game platforms
+
+- Steam (Proton or native)
+
+### Supported games
+
+- Skyrim SE/AE (SKSE modded)
 
 ## Usage
 
@@ -21,6 +31,21 @@ moma init
 
 Starts the moma game initialize wizard. Allows you to pick a game and set up the paths, configuration and minimal libraries required for you to start modding.
 
+### Launch a game
+```sh
+moma launch <game>
+```
+
+Launches the game with all mods layered on the game dir. Due to having to mount certain folders, this command needs to be run as su.
+
+## Configuration
+
+Moma stores configuration in a single TOML file, at `~/.config/moma/config.toml`.
+
+When you run `moma init`, it creates the file for you. You can also edit it manually to adjust paths, Proton versions, or game settings.
+
+See `docs/config.md` for all options.
+
 ## Roadmap
 
 ### In progress
@@ -29,7 +54,11 @@ Starts the moma game initialize wizard. Allows you to pick a game and set up the
 ### Planned
 1. Installation guide (Makefile + instructions)
 2. Mod installation and removal
-3. Declarative mod installation
-4. Nexus download integration
-5. FOMOD CLI wizard
-
+3. (Unit) tests
+4. Nexus mods API integration
+5. Load order management
+6. Declarative mod installation
+7. Nexus download integration
+8. FOMOD CLI wizard
+9. Logging for debug purposes
+10. Proper usage- and in depth documentation

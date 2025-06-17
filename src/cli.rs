@@ -1,6 +1,9 @@
 use clap::{Parser, Subcommand};
 
-use crate::{commands::Init, config::Config};
+use crate::{
+    commands::{Init, Launch},
+    config::Config,
+};
 
 #[derive(Parser)]
 #[command(
@@ -11,18 +14,25 @@ use crate::{commands::Init, config::Config};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
+
+    /// Prints extra error information to be used in debugging.
+    #[arg(short, long, global = true)]
+    pub debug: bool,
 }
 
 #[derive(Subcommand)]
 pub enum Command {
     #[command(about = "Start Moma game setup wizard")]
     Init(Init),
+    #[command(about = "Launch game with configuration")]
+    Launch(Launch),
 }
 
 impl Cli {
     pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         match &self.command {
             Some(Command::Init(cmd)) => cmd.run(config),
+            Some(Command::Launch(cmd)) => cmd.run(config),
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;

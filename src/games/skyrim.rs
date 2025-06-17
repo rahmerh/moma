@@ -13,8 +13,11 @@ use std::{
 
 use crate::{
     config::{CACHE_DIR_NAME, Config, GameConfig, MODS_DIR_NAME},
-    theme,
-    utils::{ExpandTilde, extract_archive, print_inline_status},
+    utils::{
+        fs::{ExpandTilde, extract_archive},
+        print::print_inline_status,
+        theme,
+    },
 };
 
 use super::GameProfile;
@@ -55,24 +58,23 @@ impl GameProfile for SkyrimSe {
         "Skyrim"
     }
 
-    fn default_path(&self) -> PathBuf {
-        PathBuf::from("~/.local/share/Steam/steamapps/common/Skyrim Special Edition")
+    fn default_game_path(&self, steam_dir: &Path) -> PathBuf {
+        steam_dir
+            .join("steamapps")
+            .join("common")
+            .join("Skyrim Special Edition")
     }
 
     fn game_executable(&self) -> &'static str {
         "SkyrimSE.exe"
     }
 
+    fn game_mod_executable(&self) -> &'static str {
+        "skse64_loader.exe"
+    }
+
     fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
         let theme = theme::default_theme();
-
-        let game_work_dir = config.work_dir.join(self.name().to_lowercase()).expand();
-
-        let cache_dir = game_work_dir.join(CACHE_DIR_NAME);
-        let mods_dir = game_work_dir.join(MODS_DIR_NAME);
-
-        let skse_output_dir = mods_dir.join("skse");
-        let skse_archive_path = cache_dir.join("skse.7z");
 
         let confirmed = Confirm::with_theme(&theme)
             .with_prompt("Do you want to setup SKSE?")
@@ -83,6 +85,14 @@ impl GameProfile for SkyrimSe {
             return Ok(());
         }
 
+        let game_work_dir = config.work_dir.join(self.name().to_lowercase()).expand();
+
+        let cache_dir = game_work_dir.join(CACHE_DIR_NAME);
+        let mods_dir = game_work_dir.join(MODS_DIR_NAME);
+
+        let skse_output_dir = mods_dir.join("skse");
+        let skse_archive_path = cache_dir.join("skse.7z");
+
         if skse_output_dir.exists() {
             let confirmed = Confirm::with_theme(&theme)
                 .with_prompt("SKSE already downloaded, do you want to overwrite?")
@@ -90,6 +100,8 @@ impl GameProfile for SkyrimSe {
 
             if confirmed {
                 fs::remove_dir_all(&skse_output_dir)?;
+            } else {
+                return Ok(());
             }
         }
 
