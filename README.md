@@ -29,14 +29,14 @@ Moma only supports certain game platforms and games (and game versions). This is
 moma init
 ```
 
-Starts the moma game initialize wizard. Allows you to pick a game and set up the paths, configuration and minimal libraries required for you to start modding.
+Starts the game setup wizard, guiding you through configuration, paths, and required tools.
 
 ### Launch a game
 ```sh
-moma launch <game>
+sudo moma launch <game>
 ```
 
-Launches the game with all mods layered on the game dir. Due to having to mount certain folders, this command needs to be run as su.
+Launches the game with mods layered in via an overlay. Requires root privileges due to mounting.
 
 ## Configuration
 
@@ -48,17 +48,23 @@ See `docs/config.md` for all options.
 
 ## Roadmap
 
+### Done
+[x] Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+
 ### In progress
-- Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+Installation guide (Makefile + instructions)
 
 ### Planned
-1. Installation guide (Makefile + instructions)
-2. Mod installation and removal
-3. (Unit) tests
-4. Nexus mods API integration
-5. Load order management
-6. Declarative mod installation
-7. Nexus download integration
-8. FOMOD CLI wizard
-9. Logging for debug purposes
-10. Proper usage- and in depth documentation
+1. Mod installation and removal
+2. (Unit) tests
+3. Nexus mods API integration
+4. Load order management
+5. Declarative mod installation
+6. NXS link handler (Nexus-style download URLs)
+7. FOMOD CLI wizard
+8. Logging for debug purposes
+9. Proper usage- and in depth documentation
+
+---
+
+Want to contribute? Found a bug? File an issue or open a PR. I’ll probably merge it.
