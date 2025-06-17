@@ -88,6 +88,10 @@ impl<'a> GameContext<'a> {
         Ok(())
     }
 
+    pub fn validate_sink_is_empty(&self) -> std::io::Result<bool> {
+        Ok(fs::read_dir(self.sink_dir())?.next().is_none())
+    }
+
     fn reset_overlay_dirs(&self) -> anyhow::Result<()> {
         let merged = self.overlay_merged_dir();
         let work = self.overlay_work_dir();

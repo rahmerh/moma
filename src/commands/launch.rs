@@ -2,6 +2,7 @@ use std::{fs, process::Command};
 
 use anyhow::{Context, bail};
 use clap::Args;
+use owo_colors::OwoColorize;
 
 use crate::{
     config::Config,
@@ -13,6 +14,10 @@ use crate::{
 pub struct Launch {
     /// Name of the game to launch
     pub game_name: String,
+
+    /// Forces the launch of the game, ignoring sanity checks like an empty sink folder.
+    #[arg(short, long, global = true)]
+    pub force: bool,
 }
 
 impl Launch {
@@ -23,6 +28,25 @@ impl Launch {
 
         let steam_dir = config.get_steam_dir()?;
         let context = GameContext::new(config, &self.game_name)?;
+
+        if !context.validate_sink_is_empty()? {
+            if self.force {
+                println!(
+                    "{} {}You are running {} with a non-empty sink folder.",
+                    "Warning!".red().bold().underline(),
+                    "".white(),
+                    self.game_name.underline().bold()
+                );
+                println!("{}",
+                    "To prevent unexpected overwrites, make sure to move everything into appropriate mod folders.".yellow()
+                )
+            } else {
+                bail!(
+                    "Your sink folder '{}' is not empty. Move this to an appropriate mod folder or add the force flag to continue.",
+                    context.sink_dir().display()
+                );
+            }
+        }
 
         os::unshare_current_namespace()?;
         os::remount_current_namespace_as_private()?;
