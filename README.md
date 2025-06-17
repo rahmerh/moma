@@ -12,13 +12,21 @@ Moma avoids Windows-native mod management tools and fully embraces native Linux 
 
 ## Installation
 
-Make sure you have Rust installed first. Then clone the repo and build the project:
+Make sure you have Rust installed first. Then clone the repo:
 
 ```sh
 git clone https://github.com/rahmerh/moma.git
 cd moma
-make build
 ```
+
+If you want the latest, stable binary check out main first:
+
+```
+git checkout main
+
+```
+
+If you want latest (and potentially broken), stay on develop.
 
 Run the following to install the binary system-wide:
 ```
