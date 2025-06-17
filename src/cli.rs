@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 use crate::{
-    commands::{Init, Launch},
+    commands::{Init, Launch, Supported},
     config::Config,
 };
 
@@ -24,8 +24,9 @@ pub struct Cli {
 pub enum Command {
     #[command(about = "Start Moma game setup wizard")]
     Init(Init),
-    #[command(about = "Launch game with configuration")]
     Launch(Launch),
+    #[command(about = "Lists all currently supported games")]
+    Supported(Supported),
 }
 
 impl Cli {
@@ -33,6 +34,7 @@ impl Cli {
         match &self.command {
             Some(Command::Init(cmd)) => cmd.run(config),
             Some(Command::Launch(cmd)) => cmd.run(config),
+            Some(Command::Supported(cmd)) => cmd.run(),
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;
