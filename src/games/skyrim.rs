@@ -55,8 +55,11 @@ impl GameProfile for SkyrimSe {
         "Skyrim"
     }
 
-    fn default_path(&self) -> PathBuf {
-        PathBuf::from("~/.local/share/Steam/steamapps/common/Skyrim Special Edition")
+    fn default_game_path(&self, steam_dir: &Path) -> PathBuf {
+        steam_dir
+            .join("steamapps")
+            .join("common")
+            .join("Skyrim Special Edition")
     }
 
     fn game_executable(&self) -> &'static str {
@@ -66,14 +69,6 @@ impl GameProfile for SkyrimSe {
     fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
         let theme = theme::default_theme();
 
-        let game_work_dir = config.work_dir.join(self.name().to_lowercase()).expand();
-
-        let cache_dir = game_work_dir.join(CACHE_DIR_NAME);
-        let mods_dir = game_work_dir.join(MODS_DIR_NAME);
-
-        let skse_output_dir = mods_dir.join("skse");
-        let skse_archive_path = cache_dir.join("skse.7z");
-
         let confirmed = Confirm::with_theme(&theme)
             .with_prompt("Do you want to setup SKSE?")
             .interact()?;
@@ -82,6 +77,14 @@ impl GameProfile for SkyrimSe {
             println!("{}", "\nSkipping SKSE setup.".yellow());
             return Ok(());
         }
+
+        let game_work_dir = config.work_dir.join(self.name().to_lowercase()).expand();
+
+        let cache_dir = game_work_dir.join(CACHE_DIR_NAME);
+        let mods_dir = game_work_dir.join(MODS_DIR_NAME);
+
+        let skse_output_dir = mods_dir.join("skse");
+        let skse_archive_path = cache_dir.join("skse.7z");
 
         if skse_output_dir.exists() {
             let confirmed = Confirm::with_theme(&theme)

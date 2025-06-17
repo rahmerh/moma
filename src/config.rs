@@ -1,7 +1,11 @@
+use dialoguer::Input;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
-use crate::utils::ExpandTilde;
+use crate::{theme, utils::ExpandTilde};
 
 pub const CACHE_DIR_NAME: &str = ".cache";
 pub const MODS_DIR_NAME: &str = "mods";
@@ -10,11 +14,14 @@ pub const MODS_DIR_NAME: &str = "mods";
 pub struct Config {
     pub games: HashMap<String, GameConfig>,
     pub work_dir: PathBuf,
+    pub steam_dir: Option<PathBuf>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameConfig {
     pub path: PathBuf,
+    pub name: String,
+    pub proton_version: String,
 }
 
 impl Config {
@@ -37,6 +44,58 @@ impl Config {
         }
     }
 
+    pub fn get_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
+        let steam_dir = match &self.steam_dir {
+            Some(dir) => dir.clone(),
+            None => self.resolve_and_store_steam_dir()?,
+        };
+
+        Ok(steam_dir)
+    }
+
+    pub fn resolve_and_store_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
+        let dir = Self::determine_steam_dir(self)?;
+        self.steam_dir = Some(dir.clone());
+        self.save()?;
+        Ok(dir)
+    }
+
+    fn determine_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
+        if let Some(ref dir) = self.steam_dir {
+            return Ok(dir.expand());
+        }
+
+        let candidates = [
+            "~/.steam/steam",
+            "~/.var/app/com.valvesoftware.Steam/.steam/steam",
+            "~/.local/share/Steam",
+        ];
+
+        for candidate in &candidates {
+            let expanded = PathBuf::from(candidate).expand();
+            if is_valid_steam_dir(&expanded) {
+                return Ok(expanded);
+            }
+        }
+
+        let manual_path = Input::with_theme(&theme::default_theme())
+            .with_prompt("Enter your Steam installation directory")
+            .validate_with(|input: &String| {
+                let path = Path::new(input.trim()).expand();
+                if is_valid_steam_dir(&path) {
+                    Ok(())
+                } else {
+                    Err("Not a valid Steam installation directory.")
+                }
+            })
+            .interact_text()?;
+
+        let steam_dir = PathBuf::from(manual_path.trim()).expand();
+        self.steam_dir = Some(steam_dir.clone());
+
+        Ok(steam_dir)
+    }
+
     pub fn save(&self) -> std::io::Result<()> {
         let path = Self::default_path();
         let parent = path.parent().unwrap();
@@ -46,6 +105,10 @@ impl Config {
     }
 }
 
+fn is_valid_steam_dir(path: &Path) -> bool {
+    path.join("steamapps").is_dir()
+}
+
 impl Default for Config {
     fn default() -> Self {
         let path = PathBuf::from("~/.moma").expand().display().to_string();
@@ -53,6 +116,7 @@ impl Default for Config {
         Self {
             games: HashMap::new(),
             work_dir,
+            steam_dir: None,
         }
     }
 }

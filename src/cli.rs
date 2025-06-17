@@ -14,6 +14,10 @@ use crate::{
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
+
+    /// Prints extra error information to be used in debugging.
+    #[arg(short, long, global = true)]
+    pub debug: bool,
 }
 
 #[derive(Subcommand)]

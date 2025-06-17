@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::stdout,
+    io::{self, stdout},
     path::{Path, PathBuf},
 };
 
@@ -56,5 +56,41 @@ pub fn print_inline_status(message: &str) -> anyhow::Result<()> {
         .execute(MoveToColumn(0))?
         .execute(Clear(ClearType::CurrentLine))?
         .execute(Print(message))?;
+    Ok(())
+}
+
+pub fn copy_dir(from: &Path, to: &Path, recursive: bool, flatten: bool) -> io::Result<()> {
+    if !from.is_dir() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Source must be a directory",
+        ));
+    }
+
+    let target = if flatten {
+        to.to_path_buf()
+    } else {
+        to.join(from.file_name().unwrap())
+    };
+
+    fs::create_dir_all(&target)?;
+
+    for entry in fs::read_dir(from)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        let dest_path = target.join(entry.file_name());
+        let metadata = entry.metadata()?;
+
+        if metadata.is_dir() {
+            if recursive {
+                copy_dir(&src_path, &dest_path, true, true)?;
+            } else if !flatten {
+                fs::create_dir_all(&dest_path)?;
+            }
+        } else if metadata.is_file() {
+            fs::copy(&src_path, &dest_path)?;
+        }
+    }
+
     Ok(())
 }

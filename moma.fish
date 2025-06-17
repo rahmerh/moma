@@ -63,3 +63,5 @@ cd \"\$HOME/.moma/active\"
 \"$proton\" run \"\$HOME/.moma/active/skse64_loader.exe\"" >$launcher_path
 
 chmod +x $launcher_path
+
+STEAM_COMPAT_DATA_PATH=/home/bas/.moma/proton STEAM_COMPAT_CLIENT_INSTALL_PATH=/home/bas/.steam/steam /home/bas/.local/share/Steam/steamapps/common/Proton\ Hotfix/proton run /home/bas/.moma/skyrim/active/skse64_loader.exe

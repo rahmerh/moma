@@ -960,6 +960,7 @@ dependencies = [
  "dialoguer",
  "directories",
  "dirs-next",
+ "libc",
  "once_cell",
  "owo-colors",
  "pelite",
