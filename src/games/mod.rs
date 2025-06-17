@@ -5,6 +5,7 @@ use crate::{
     games::skyrim::SkyrimSe,
 };
 
+pub mod context;
 pub mod skyrim;
 
 pub trait GameProfile {

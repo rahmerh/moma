@@ -19,8 +19,13 @@ pub struct Config {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameConfig {
+    /// Absolute path to the base game's installation directory
     pub path: PathBuf,
+
+    /// Identifier used to match the game profile (e.g. "SkyrimSE")
     pub name: String,
+
+    /// Path to the Proton version used to launch this game
     pub proton_dir: PathBuf,
 }
 
