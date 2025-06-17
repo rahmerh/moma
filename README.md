@@ -54,10 +54,11 @@ See `docs/config.md` for all options.
 ### Planned
 1. Installation guide (Makefile + instructions)
 2. Mod installation and removal
-3. Nexus mods API integration
-4. Load order management
-5. Declarative mod installation
-6. Nexus download integration
-7. FOMOD CLI wizard
-8. Logging for debug purposes
-9. Proper usage- and in depth documentation
+3. (Unit) tests
+4. Nexus mods API integration
+5. Load order management
+6. Declarative mod installation
+7. Nexus download integration
+8. FOMOD CLI wizard
+9. Logging for debug purposes
+10. Proper usage- and in depth documentation
