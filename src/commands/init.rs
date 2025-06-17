@@ -7,8 +7,7 @@ use std::path::{Path, PathBuf};
 use crate::{
     config::{Config, GameConfig},
     games::GameProfile,
-    theme,
-    utils::ExpandTilde,
+    utils::{fs::ExpandTilde, theme},
 };
 
 #[derive(Args)]

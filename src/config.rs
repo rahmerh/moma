@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{theme, utils::ExpandTilde};
+use crate::utils::{fs::ExpandTilde, theme};
 
 pub const CACHE_DIR_NAME: &str = ".cache";
 pub const MODS_DIR_NAME: &str = "mods";

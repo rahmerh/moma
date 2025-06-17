@@ -2,9 +2,6 @@ mod cli;
 mod commands;
 mod config;
 mod games;
-mod os;
-mod overlay;
-mod theme;
 mod utils;
 
 use clap::Parser;

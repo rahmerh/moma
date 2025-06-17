@@ -1,9 +1,13 @@
-use std::{fs, path::PathBuf, process::Command};
+use std::{fs, process::Command};
 
 use anyhow::{Context, bail};
 use clap::Args;
 
-use crate::{config::Config, games::context::GameContext, os, overlay, utils::copy_dir};
+use crate::{
+    config::Config,
+    games::context::GameContext,
+    utils::{fs::copy_dir, os, overlay},
+};
 
 #[derive(Args)]
 pub struct Launch {
@@ -23,22 +27,20 @@ impl Launch {
         os::unshare_current_namespace()?;
         os::remount_current_namespace_as_private()?;
 
-        context.reset_overlay_dirs()?;
+        context.prepare_file_system()?;
 
         overlay::mount_overlay_for(&context)
             .with_context(|| format!("Could not mount overlay folders for {}", self.game_name))?;
 
-        // TODO: Copy all mods automatically
-        copy_dir(
-            PathBuf::from("/home/bas/.moma/skyrim/mods/skse").as_ref(),
-            &context.overlay_merged_dir(),
-            true,
-            true,
-        )?;
+        for entry in fs::read_dir(context.mods_dir())? {
+            let entry = entry?;
+            if !entry.metadata()?.is_dir() {
+                continue;
+            }
+            copy_dir(&entry.path(), &context.overlay_merged_dir(), true, true)?;
+        }
 
         os::drop_privileges()?;
-
-        fs::create_dir_all(context.proton_work_dir())?;
 
         let mut proton_cmd = Command::new(context.proton_binary());
         proton_cmd.current_dir(&context.active_dir());

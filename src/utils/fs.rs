@@ -1,14 +1,6 @@
 use std::{
-    fs,
-    io::{self, stdout},
+    fs, io,
     path::{Path, PathBuf},
-};
-
-use crossterm::{
-    ExecutableCommand,
-    cursor::MoveToColumn,
-    style::Print,
-    terminal::{Clear, ClearType},
 };
 
 pub trait ExpandTilde {
@@ -47,15 +39,6 @@ pub fn extract_archive(
         }
     }
 
-    Ok(())
-}
-
-pub fn print_inline_status(message: &str) -> anyhow::Result<()> {
-    let mut stdout = stdout();
-    stdout
-        .execute(MoveToColumn(0))?
-        .execute(Clear(ClearType::CurrentLine))?
-        .execute(Print(message))?;
     Ok(())
 }
 

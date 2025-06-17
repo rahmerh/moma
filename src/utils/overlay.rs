@@ -12,9 +12,10 @@ pub fn mount_overlay_for(context: &GameContext) -> anyhow::Result<()> {
             "overlay",
             "-o",
             &format!(
-                "lowerdir={},upperdir={},workdir={}",
+                "lowerdir={}:{},upperdir={},workdir={}",
                 context.game.path.display(),
                 context.overlay_merged_dir().display(),
+                context.sink_dir().display(),
                 context.overlay_work_dir().display(),
             ),
             context.active_dir().to_str().unwrap(),

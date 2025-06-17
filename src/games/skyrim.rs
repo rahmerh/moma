@@ -13,8 +13,11 @@ use std::{
 
 use crate::{
     config::{CACHE_DIR_NAME, Config, GameConfig, MODS_DIR_NAME},
-    theme,
-    utils::{ExpandTilde, extract_archive, print_inline_status},
+    utils::{
+        fs::{ExpandTilde, extract_archive},
+        print::print_inline_status,
+        theme,
+    },
 };
 
 use super::GameProfile;

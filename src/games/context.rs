@@ -1,16 +1,23 @@
-use std::{fs, io::ErrorKind, path::PathBuf};
+use std::{
+    fs::{self},
+    io::ErrorKind,
+    path::PathBuf,
+};
 
 use anyhow::Context;
 
 use crate::{
     config::{Config, GameConfig},
     games::{GameProfile, get_game_profile_by_name},
+    utils::os,
 };
 
 const OVERLAY: &str = ".overlay";
 const MERGED: &str = "merged";
 const WORK: &str = "work";
 const ACTIVE: &str = "active";
+const MODS: &str = "mods";
+const SINK: &str = "sink";
 const PROTON: &str = "proton";
 
 pub struct GameContext<'a> {
@@ -37,6 +44,14 @@ impl<'a> GameContext<'a> {
         self.root.join(OVERLAY).join(WORK)
     }
 
+    pub fn mods_dir(&self) -> PathBuf {
+        self.root.join(MODS)
+    }
+
+    pub fn sink_dir(&self) -> PathBuf {
+        self.root.join(SINK)
+    }
+
     pub fn proton_work_dir(&self) -> PathBuf {
         self.root.join(PROTON)
     }
@@ -61,7 +76,19 @@ impl<'a> GameContext<'a> {
         })
     }
 
-    pub fn reset_overlay_dirs(&self) -> anyhow::Result<()> {
+    pub fn prepare_file_system(&self) -> anyhow::Result<()> {
+        fs::create_dir_all(self.sink_dir())?;
+        fs::create_dir_all(self.proton_work_dir())?;
+
+        os::chown_dir(&self.proton_work_dir())
+            .with_context(|| "Could now set proton working dir permissions.")?;
+
+        self.reset_overlay_dirs()?;
+
+        Ok(())
+    }
+
+    fn reset_overlay_dirs(&self) -> anyhow::Result<()> {
         let merged = self.overlay_merged_dir();
         let work = self.overlay_work_dir();
         let active = self.active_dir();

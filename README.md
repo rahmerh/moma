@@ -34,4 +34,4 @@ Starts the moma game initialize wizard. Allows you to pick a game and set up the
 3. Declarative mod installation
 4. Nexus download integration
 5. FOMOD CLI wizard
-
+6. Logging for debug purposes
