@@ -10,6 +10,31 @@ To keep your game installation untouched, Moma builds a temporary environment wh
 
 Moma avoids Windows-native mod management tools and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
 
+## Installation
+
+Make sure you have Rust installed first. Then clone the repo and build the project:
+
+```sh
+git clone https://github.com/rahmerh/moma.git
+cd moma
+make build
+```
+
+Run the following to install the binary system-wide:
+```
+sudo make install
+```
+
+This will copy the binary to `/usr/local/bin/moma`. You can now run moma from anywhere.
+
+> 💡 **Hint:** You can also install it locally without sudo:
+>
+> ```sh
+> mkdir -p ~/.local/bin
+> cp target/release/moma ~/.local/bin
+> ```
+> Make sure `~/.local/bin` is in your `PATH`.
+
 ## Support
 
 Moma only supports certain game platforms and games (and game versions). This is mostly due to that I'm not going to buy games I won't play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
