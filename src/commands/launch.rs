@@ -11,9 +11,6 @@ use crate::{
 };
 
 #[derive(Args)]
-#[command(
-    about = "Launch game with configuration. For a list of supported games, run `moma supported`."
-)]
 pub struct Launch {
     /// Name of the game to launch
     pub game_name: String,

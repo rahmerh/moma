@@ -966,6 +966,7 @@ dependencies = [
  "pelite",
  "reqwest",
  "serde",
+ "serde_json",
  "sevenz-rust2",
  "shellexpand",
  "tokio",

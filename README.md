@@ -54,6 +54,10 @@ Moma only supports certain game platforms and games (and game versions). This is
 
 - Skyrim SE/AE (SKSE modded)
 
+### Supported mod platforms
+
+- [Nexus mods](https://www.nexusmods.com/)
+
 ## Usage
 
 ### Initialize
@@ -90,10 +94,9 @@ Mod installation and removal
 
 ### Planned
 - (Unit) tests
-- Nexus mods API integration
 - Load order management
 - Declarative mod installation
-- NXS link handler (Nexus-style download URLs)
+- NXM link handler (Nexus download URLs)
 - FOMOD CLI wizard
 - Logging for debug purposes
 - Proper usage- and in depth documentation

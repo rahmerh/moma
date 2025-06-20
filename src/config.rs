@@ -1,7 +1,9 @@
 use anyhow::bail;
 use dialoguer::Input;
 use libc::{getpwuid, uid_t};
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{
     collections::HashMap,
     env,
@@ -19,6 +21,7 @@ pub struct Config {
     pub games: HashMap<String, GameConfig>,
     pub work_dir: PathBuf,
     pub steam_dir: Option<PathBuf>,
+    pub nexus_api_key: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -91,7 +94,7 @@ impl Config {
         Ok(steam_dir)
     }
 
-    pub fn resolve_and_store_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
+    fn resolve_and_store_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
         let dir = Self::determine_steam_dir(self)?;
         self.steam_dir = Some(dir.clone());
         self.save()?;
@@ -181,6 +184,7 @@ impl Default for Config {
             games: HashMap::new(),
             work_dir,
             steam_dir: None,
+            nexus_api_key: None,
         }
     }
 }
