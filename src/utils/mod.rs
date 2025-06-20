@@ -1,5 +1,5 @@
 pub mod fs;
+pub mod nexus;
 pub mod os;
-pub mod overlay;
 pub mod print;
 pub mod theme;

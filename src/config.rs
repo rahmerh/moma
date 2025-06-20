@@ -1,9 +1,7 @@
 use anyhow::bail;
 use dialoguer::Input;
 use libc::{getpwuid, uid_t};
-use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::{
     collections::HashMap,
     env,
@@ -11,12 +9,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::utils::{fs::ExpandTilde, os::chown_dir, theme};
+use crate::utils::{fs::ExpandTilde, os::permissions, theme};
 
 pub const CACHE_DIR_NAME: &str = ".cache";
 pub const MODS_DIR_NAME: &str = "mods";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Config {
     pub games: HashMap<String, GameConfig>,
     pub work_dir: PathBuf,
@@ -24,7 +22,7 @@ pub struct Config {
     pub nexus_api_key: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GameConfig {
     /// Absolute path to the base game's installation directory
     pub path: PathBuf,
@@ -69,7 +67,7 @@ impl GameConfig {
 
 impl Config {
     pub fn load_or_default() -> anyhow::Result<Config> {
-        let path = match Self::resolve_config_path() {
+        let path = match resolve_config_file_path("config.toml") {
             Some(path) => path,
             None => bail!("Failed to resolve config path"),
         };
@@ -99,28 +97,6 @@ impl Config {
         self.steam_dir = Some(dir.clone());
         self.save()?;
         Ok(dir)
-    }
-
-    fn resolve_config_path() -> Option<PathBuf> {
-        if let Ok(config_home) = env::var("XDG_CONFIG_HOME") {
-            return Some(PathBuf::from(config_home).join("moma/config.toml"));
-        }
-
-        // If running as root with SUDO_UID, resolve real user's home
-        if let Ok(uid_str) = env::var("SUDO_UID") {
-            if let Ok(uid) = uid_str.parse::<uid_t>() {
-                unsafe {
-                    let pw = getpwuid(uid);
-                    if !pw.is_null() {
-                        let dir = CStr::from_ptr((*pw).pw_dir).to_string_lossy().into_owned();
-                        return Some(PathBuf::from(dir).join(".config/moma/config.toml"));
-                    }
-                }
-            }
-        }
-
-        // Fallback to current user
-        dirs_next::config_dir().map(|p| p.join("moma/config.toml"))
     }
 
     fn determine_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
@@ -160,7 +136,7 @@ impl Config {
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
-        let path = match Self::resolve_config_path() {
+        let path = match resolve_config_file_path("config.toml") {
             Some(path) => path,
             None => bail!("Failed to resolve config path"),
         };
@@ -168,12 +144,32 @@ impl Config {
         std::fs::create_dir_all(parent)?;
         let toml = toml::to_string_pretty(self).unwrap();
         std::fs::write(&path, toml)?;
-        chown_dir(&parent, true)
+        permissions::chown_dir(&parent, true)
     }
 }
 
 fn is_valid_steam_dir(path: &Path) -> bool {
     path.join("steamapps").is_dir()
+}
+
+pub(crate) fn resolve_config_file_path(filename: &str) -> Option<PathBuf> {
+    if let Ok(config_home) = env::var("XDG_CONFIG_HOME") {
+        return Some(PathBuf::from(config_home).join("moma").join(filename));
+    }
+
+    if let Ok(uid_str) = env::var("SUDO_UID") {
+        if let Ok(uid) = uid_str.parse::<uid_t>() {
+            unsafe {
+                let pw = getpwuid(uid);
+                if !pw.is_null() {
+                    let dir = CStr::from_ptr((*pw).pw_dir).to_string_lossy().into_owned();
+                    return Some(PathBuf::from(dir).join(".config/moma").join(filename));
+                }
+            }
+        }
+    }
+
+    dirs_next::config_dir().map(|p| p.join("moma").join(filename))
 }
 
 impl Default for Config {

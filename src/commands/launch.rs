@@ -7,7 +7,7 @@ use owo_colors::OwoColorize;
 use crate::{
     config::Config,
     games::context::GameContext,
-    utils::{fs::copy_dir, os, overlay, print},
+    utils::{fs::copy_dir, os::mount, os::permissions, print},
 };
 
 #[derive(Args)]
@@ -22,7 +22,7 @@ pub struct Launch {
 
 impl Launch {
     pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
-        if !os::is_process_root() {
+        if !permissions::is_process_root() {
             bail!("This command must be run as root. Try again with `sudo`.");
         }
 
@@ -49,12 +49,12 @@ impl Launch {
 
         print::print_inline_status(&format!("{}", "Mounting game folders...".bold()))?;
 
-        os::unshare_current_namespace()?;
-        os::remount_current_namespace_as_private()?;
+        mount::unshare_current_namespace()?;
+        mount::remount_current_namespace_as_private()?;
 
         context.prepare_file_system()?;
 
-        overlay::mount_overlay_for(&context)
+        mount::mount_overlay_for(&context)
             .with_context(|| format!("Could not mount overlay folders for {}", self.game_name))?;
 
         print::print_inline_status(&format!("{}", "Copying mods into mounted folder...".bold()))?;
@@ -67,7 +67,7 @@ impl Launch {
             copy_dir(&entry.path(), &context.overlay_merged_dir(), true, true)?;
         }
 
-        os::drop_privileges()?;
+        permissions::drop_privileges()?;
 
         if !context.proton_binary().exists() {
             bail!(

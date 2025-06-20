@@ -10,6 +10,7 @@ use owo_colors::OwoColorize;
 use crate::{cli::Cli, config::Config};
 
 fn main() {
+    env_logger::init();
     std::panic::set_hook(Box::new(|info| {
         eprintln!("{} {}", "Encountered a panic:".red().bold(), info);
         std::process::exit(1);

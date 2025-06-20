@@ -1,32 +1,9 @@
-use std::{env, ffi::CString, fs, io, os::unix::ffi::OsStrExt, path::Path, process::Command};
+use std::{env, ffi::CString, fs, os::unix::ffi::OsStrExt, path::Path};
 
-use anyhow::Context;
-use libc::{CLONE_NEWNS, chown, getuid, gid_t, uid_t};
+use libc::{chown, getuid, gid_t, uid_t};
 
 pub fn is_process_root() -> bool {
     unsafe { getuid() == 0 }
-}
-
-pub fn unshare_current_namespace() -> anyhow::Result<()> {
-    let result = unsafe { libc::unshare(CLONE_NEWNS) };
-
-    if result == -1 {
-        let errno = io::Error::last_os_error();
-        Err(anyhow::anyhow!("Failed to unshare namespace: {}", errno))
-            .with_context(|| "unshare(CLONE_NEWNS | CLONE_NEWPID) failed")
-    } else {
-        Ok(())
-    }
-}
-
-pub fn remount_current_namespace_as_private() -> anyhow::Result<()> {
-    Command::new("mount")
-        .args(["--make-rprivate", "/"])
-        .status()
-        .with_context(|| "Failed to set mount propagation to private")?
-        .success()
-        .then_some(())
-        .ok_or_else(|| anyhow::anyhow!("mount --make-rprivate / failed"))
 }
 
 pub fn drop_privileges() -> anyhow::Result<()> {

@@ -9,7 +9,7 @@ use anyhow::Context;
 use crate::{
     config::{Config, GameConfig},
     games::{GameProfile, get_game_profile_by_name},
-    utils::os,
+    utils::os::permissions,
 };
 
 const OVERLAY: &str = ".overlay";
@@ -80,7 +80,7 @@ impl<'a> GameContext<'a> {
         fs::create_dir_all(self.sink_dir())?;
         fs::create_dir_all(self.proton_work_dir())?;
 
-        os::chown_dir(&self.proton_work_dir(), false)
+        permissions::chown_dir(&self.proton_work_dir(), false)
             .with_context(|| "Could not set proton working dir permissions.")?;
 
         self.reset_overlay_dirs()?;

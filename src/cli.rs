@@ -1,7 +1,9 @@
 use clap::{Parser, Subcommand};
 
 use crate::{
-    commands::{Add, Connect, Init, Launch, Supported},
+    commands::{
+        connect::Connect, init::Init, launch::Launch, modctl::add::Add, supported::Supported,
+    },
     config::Config,
 };
 
@@ -64,7 +66,7 @@ impl Cli {
             Some(Command::Init(cmd)) => cmd.run(config),
             Some(Command::Launch(cmd)) => cmd.run(config),
             Some(Command::Supported(cmd)) => cmd.run(),
-            Some(Command::Connect(cmd)) => cmd.run(),
+            Some(Command::Connect(cmd)) => cmd.run(self.debug),
             Some(Command::Mod { game, action }) => action.run(game, config),
             None => {
                 use clap::CommandFactory;
