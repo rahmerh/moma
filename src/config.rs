@@ -33,7 +33,35 @@ pub struct GameConfig {
     pub proton_dir: PathBuf,
 
     /// Environment variables to be set before game launch
-    pub env: HashMap<String, String>,
+    pub env: Option<HashMap<String, String>>,
+}
+
+impl GameConfig {
+    pub fn get_env_vars(&self) -> HashMap<String, String> {
+        let mut all_vars = HashMap::new();
+
+        if let Some(env_map) = &self.env {
+            all_vars.extend(env_map.clone());
+        }
+
+        for key in ["WAYLAND_DISPLAY", "DISPLAY", "XDG_RUNTIME_DIR"] {
+            if let Some(val) = self.get_env_var_with_fallback(key) {
+                all_vars.insert(key.to_string(), val);
+            }
+        }
+
+        all_vars
+    }
+
+    fn get_env_var_with_fallback(&self, key: &str) -> Option<String> {
+        if let Some(env_map) = &self.env {
+            if let Some(val) = env_map.get(key) {
+                return Some(val.clone());
+            }
+        }
+
+        env::var(key).ok()
+    }
 }
 
 impl Config {
@@ -71,7 +99,6 @@ impl Config {
     }
 
     fn resolve_config_path() -> Option<PathBuf> {
-        // Prefer $XDG_CONFIG_HOME if set
         if let Ok(config_home) = env::var("XDG_CONFIG_HOME") {
             return Some(PathBuf::from(config_home).join("moma/config.toml"));
         }

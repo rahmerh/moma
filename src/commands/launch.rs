@@ -1,4 +1,4 @@
-use std::{fs, process::Command};
+use std::{collections::HashMap, fs, process::Command};
 
 use anyhow::{Context, bail};
 use clap::Args;
@@ -83,10 +83,11 @@ impl Launch {
 
         let mut proton_cmd = Command::new(context.proton_binary());
         proton_cmd.current_dir(&context.active_dir());
-        proton_cmd.envs(std::env::vars());
-        for (key, value) in &context.game.env {
-            proton_cmd.env(key, value);
-        }
+
+        let mut merged_env = std::env::vars().collect::<HashMap<_, _>>();
+        merged_env.extend(context.game.get_env_vars());
+        proton_cmd.envs(&merged_env);
+
         proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", steam_dir);
         proton_cmd.env("STEAM_COMPAT_DATA_PATH", &context.proton_work_dir());
         proton_cmd.arg("run");
