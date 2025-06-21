@@ -1,18 +1,34 @@
+use std::fmt::Display;
+
+use serde::{Deserialize, Serialize};
+use strum_macros::EnumIter;
+
 pub mod nexus;
 
-#[derive(clap::ValueEnum, Clone)]
-pub enum ModPlatform {
+pub trait ModPlatform {
+    fn setup(&self) -> anyhow::Result<()>;
+}
+
+#[derive(clap::ValueEnum, Debug, Clone, Serialize, Deserialize, EnumIter)]
+pub enum ModPlatformKind {
     Nexus,
 }
 
-impl ModPlatform {
-    pub fn name(&self) -> &'static str {
+impl ModPlatformKind {
+    pub fn setup(&self) -> anyhow::Result<()> {
         match self {
-            ModPlatform::Nexus => "Nexus",
+            ModPlatformKind::Nexus => {
+                let platform = nexus::NexusPlatform;
+                platform.setup()
+            }
         }
     }
 }
 
-pub fn get_supported_mod_platforms() -> Vec<ModPlatform> {
-    vec![ModPlatform::Nexus]
+impl Display for ModPlatformKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ModPlatformKind::Nexus => write!(f, "Nexus"),
+        }
+    }
 }

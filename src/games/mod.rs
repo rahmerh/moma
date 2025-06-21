@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use crate::{
     config::{Config, GameConfig},
     games::skyrim::SkyrimSe,
+    mod_platforms::ModPlatformKind,
 };
 
 pub mod context;
@@ -14,6 +15,7 @@ pub trait GameProfile {
     fn game_executable(&self) -> &'static str;
     fn game_mod_executable(&self) -> &'static str;
     fn setup_modding(&self, config: &Config, config: &GameConfig) -> anyhow::Result<()>;
+    fn supported_mod_platforms(&self) -> Vec<ModPlatformKind>;
 }
 
 pub fn get_supported_games() -> Vec<Box<dyn GameProfile>> {

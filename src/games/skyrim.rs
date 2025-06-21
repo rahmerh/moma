@@ -13,6 +13,7 @@ use std::{
 
 use crate::{
     config::{CACHE_DIR_NAME, Config, GameConfig, MODS_DIR_NAME},
+    mod_platforms::ModPlatformKind,
     utils::{
         fs::{ExpandTilde, extract_archive},
         print::print_inline_status,
@@ -138,5 +139,9 @@ impl GameProfile for SkyrimSe {
         );
 
         Ok(())
+    }
+
+    fn supported_mod_platforms(&self) -> Vec<ModPlatformKind> {
+        vec![ModPlatformKind::Nexus]
     }
 }

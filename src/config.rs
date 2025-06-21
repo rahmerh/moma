@@ -9,7 +9,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::utils::{fs::ExpandTilde, os::permissions, theme};
+use crate::{
+    mod_platforms::ModPlatformKind,
+    utils::{fs::ExpandTilde, os::permissions, theme},
+};
 
 pub const CACHE_DIR_NAME: &str = ".cache";
 pub const MODS_DIR_NAME: &str = "mods";
@@ -35,6 +38,9 @@ pub struct GameConfig {
 
     /// Environment variables to be set before game launch
     pub env: Option<HashMap<String, String>>,
+
+    /// All mod platforms to be used to manage mods for this game
+    pub mod_platforms: Vec<ModPlatformKind>,
 }
 
 impl GameConfig {

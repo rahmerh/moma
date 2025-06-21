@@ -1,12 +1,14 @@
 use anyhow::Context;
 use clap::Args;
-use dialoguer::{Confirm, Input, Select, theme::ColorfulTheme};
+use dialoguer::{Confirm, Input, MultiSelect, Select, theme::ColorfulTheme};
 use owo_colors::OwoColorize;
 use std::path::{Path, PathBuf};
 
 use crate::{
     config::{Config, GameConfig},
     games::GameProfile,
+    mod_platforms::ModPlatformKind,
+    prompt::reorder,
     utils::{fs::ExpandTilde, theme},
 };
 
@@ -31,12 +33,21 @@ impl Init {
         let game_ref = &*game;
         let game_install_dir = determine_game_installation_dir(game_ref, &steam_dir, &theme)?;
         let proton_dir = determine_proton(&steam_dir, game_ref, &theme)?;
+        let mod_platforms = determine_desired_mod_platforms(game_ref, &theme)?;
 
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
         println!("Game: \"{}\"", &game.name().bold());
         println!("Proton path: \"{}\"", &proton_dir.display().bold());
         println!("Path: \"{}\"", game_install_dir.display().bold());
+        println!(
+            "Mod platforms: \"{}\"",
+            mod_platforms
+                .iter()
+                .map(|p| p.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
         println!(
             "Moma's game working directory: \"{}\"",
             config.work_dir.join(&game_key).display()
@@ -57,6 +68,7 @@ impl Init {
             name: game_key.clone(),
             proton_dir,
             env: None,
+            mod_platforms: mod_platforms,
         };
 
         config.games.insert(game_key.clone(), game_config);
@@ -191,4 +203,44 @@ fn determine_proton(
         .interact()?;
 
     Ok(entries[selection].path())
+}
+
+fn determine_desired_mod_platforms(
+    game: &dyn GameProfile,
+    theme: &ColorfulTheme,
+) -> anyhow::Result<Vec<ModPlatformKind>> {
+    let supported = game.supported_mod_platforms();
+
+    if supported.len() == 1 {
+        return Ok(supported);
+    }
+
+    let options: Vec<String> = supported.iter().map(|p| p.to_string()).collect();
+
+    let selection;
+    loop {
+        let chosen = MultiSelect::with_theme(theme)
+            .with_prompt(format!(
+                "Which mod platforms do you want to use for {}? (Space to check, enter to submit)",
+                game.name()
+            ))
+            .items(&options)
+            .interact()?;
+
+        if chosen.is_empty() {
+            println!("{}", "Please select at least one platform.".red());
+        } else {
+            selection = chosen;
+            break;
+        }
+    }
+
+    let mut selected_platforms: Vec<ModPlatformKind> = selection
+        .into_iter()
+        .map(|i| supported[i].clone())
+        .collect();
+
+    selected_platforms = reorder::reorder_items(selected_platforms)?;
+
+    Ok(selected_platforms)
 }

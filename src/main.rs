@@ -3,6 +3,7 @@ mod commands;
 mod config;
 mod games;
 mod mod_platforms;
+mod prompt;
 mod utils;
 
 use clap::Parser;
