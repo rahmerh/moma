@@ -16,10 +16,6 @@ use crate::{
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
-
-    /// Prints extra error information to be used in debugging.
-    #[arg(short, long, global = true)]
-    pub debug: bool,
 }
 
 #[derive(Subcommand)]
@@ -66,7 +62,7 @@ impl Cli {
             Some(Command::Init(cmd)) => cmd.run(config),
             Some(Command::Launch(cmd)) => cmd.run(config),
             Some(Command::Supported(cmd)) => cmd.run(),
-            Some(Command::Connect(cmd)) => cmd.run(self.debug),
+            Some(Command::Connect(cmd)) => cmd.run(),
             Some(Command::Mod { game, action }) => action.run(game, config),
             None => {
                 use clap::CommandFactory;

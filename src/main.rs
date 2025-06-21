@@ -2,6 +2,7 @@ mod cli;
 mod commands;
 mod config;
 mod games;
+mod mod_platforms;
 mod utils;
 
 use clap::Parser;
@@ -21,10 +22,8 @@ fn main() {
     if let Err(err) = run(&cli) {
         eprintln!("{} {}", "Encountered a problem:".red().bold(), err);
 
-        if cli.debug {
-            for cause in err.chain().skip(1) {
-                eprintln!(" -> caused by: {}", cause);
-            }
+        for cause in err.chain().skip(1) {
+            log::debug!(" -> caused by: {}", cause);
         }
         std::process::exit(1);
     }

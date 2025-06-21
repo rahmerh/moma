@@ -1,26 +1,32 @@
+use std::process::Command;
+
+use anyhow::Context;
 use clap::Args;
 use dialoguer::{Confirm, Input, Password};
 use owo_colors::OwoColorize;
-use reqwest::{Url, blocking::Client};
-use serde_json::Value;
 
-use crate::utils::{
-    nexus::{self},
-    theme,
+use crate::{
+    mod_platforms::{
+        ModPlatform,
+        nexus::{
+            client::NexusClient,
+            config::{self, Config},
+        },
+    },
+    utils::theme,
 };
 
 #[derive(Args)]
 pub struct Connect {
-    pub mod_platform: String,
+    #[arg(value_enum)]
+    pub mod_platform: ModPlatform,
 }
 
-const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
-
 impl Connect {
-    pub fn run(&self, debug: bool) -> anyhow::Result<()> {
+    pub fn run(&self) -> anyhow::Result<()> {
         let theme = theme::default_theme();
 
-        if nexus::api_key_exists() {
+        if config::api_key_exists() {
             let confirmation = Confirm::with_theme(&theme)
                 .with_prompt("Nexus connection already set up, do you want to overwrite?")
                 .interact()?;
@@ -45,45 +51,41 @@ impl Connect {
             .allow_empty(true)
             .interact_text();
 
-        let path = Password::with_theme(&theme)
-            .with_prompt(format!("Enter your API key",))
-            .validate_with(|input: &String| {
-                let client = Client::new();
+        Command::new("xdg-open")
+            .arg("https://www.nexusmods.com/users/myaccount?tab=api")
+            .spawn()?;
 
-                let base = Url::parse(NEXUS_BASE_URL).unwrap();
-                let url = base.join("users/validate.json").unwrap();
+        let response;
+        loop {
+            let input = Password::with_theme(&theme)
+                .with_prompt("Enter your Nexus API key")
+                .interact()
+                .with_context(|| "Failed to read input")?;
 
-                log::debug!("{}", url.as_str());
-
-                let res = match client
-                    .get(url)
-                    .header("apikey", input)
-                    .header("Accept", "application/json")
-                    .send()
-                {
-                    Ok(r) => r,
-                    Err(_) => return Err("Could not reach Nexus Mods API"),
-                };
-
-                if !res.status().is_success() {
-                    log::debug!("{}", res.text().unwrap());
-                    return Err("Invalid API key or access denied");
+            match NexusClient::validate_key(&input) {
+                Ok(r) => {
+                    println!("Authenticated as Nexus user: {}", r.name);
+                    response = r;
+                    break;
                 }
+                Err(_) => {
+                    eprintln!("{}{}", "Invalid key".red(), ", please try again.");
+                }
+            }
+        }
 
-                let json: Value = match res.json() {
-                    Ok(j) => j,
-                    Err(_) => return Err("Failed to parse Nexus Mods response"),
-                };
+        Config::save_api_key(&response.key)?;
+        let mut config = Config::load()?;
+        config.username = Some(response.name);
+        config.is_premium = response.is_premium;
+        config.save()?;
 
-                let user = json
-                    .get("name")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("Unknown");
-                println!("Authenticated as Nexus user: {}", user);
-
-                Ok(())
-            })
-            .interact()?;
+        println!(
+            "{}",
+            "\nSuccessfully connected your nexus mods account!\n"
+                .cyan()
+                .bold()
+        );
 
         Ok(())
     }

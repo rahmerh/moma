@@ -74,6 +74,20 @@ sudo moma launch <game>
 
 Launches the game with mods layered in via an overlay. Requires root privileges due to mounting.
 
+### Connect to a mod platform
+```sh
+moma connect <platform>
+```
+
+Connects to the specified platform and stores required information locally for future mod management commands.
+
+### List supported games/platforms
+```sh
+moma supported
+```
+
+Lists all supported games and mod platforms, these values can be used by the commands mentioned above.
+
 ## Configuration
 
 Moma stores configuration in a single TOML file, at `~/.config/moma/config.toml`.
@@ -97,6 +111,7 @@ Mod installation and removal
 - Load order management
 - Declarative mod installation
 - NXM link handler (Nexus download URLs)
+- Mod management commands (search, update, etc.)
 - FOMOD CLI wizard
 - Logging for debug purposes
 - Proper usage- and in depth documentation
