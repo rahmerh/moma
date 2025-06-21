@@ -4,9 +4,10 @@ use std::{
     time::Duration,
 };
 
+use anyhow::bail;
 use crossterm::{
     cursor,
-    event::{self, Event, KeyCode},
+    event::{self, Event, KeyCode, KeyModifiers},
     execute, queue,
     style::Print,
     terminal::{self, ClearType},
@@ -77,6 +78,10 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
                         }
                     }
                     KeyCode::Enter => break,
+                    KeyCode::Char('q') => bail!("Process was interrupted by user"),
+                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        bail!("Process was interrupted by user")
+                    }
                     _ => {}
                 }
             }
