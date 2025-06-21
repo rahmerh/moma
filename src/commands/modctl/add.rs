@@ -1,4 +1,7 @@
-use crate::config::Config;
+use crate::{
+    config::Config,
+    mod_platforms::nexus::{self, NexusPlatform},
+};
 
 pub struct Add;
 

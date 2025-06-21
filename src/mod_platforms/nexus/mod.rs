@@ -13,7 +13,7 @@ use crate::{
 };
 
 mod client;
-mod config;
+pub mod config;
 
 pub struct NexusPlatform;
 
@@ -27,6 +27,7 @@ impl ModPlatform for NexusPlatform {
                 .interact()?;
 
             if !confirmation {
+                println!("{}", "Exiting setup.".yellow());
                 return Ok(());
             }
         }
@@ -81,6 +82,12 @@ impl ModPlatform for NexusPlatform {
                 .cyan()
                 .bold()
         );
+
+        Ok(())
+    }
+
+    fn download_mod(&self, config: &Config) -> anyhow::Result<()> {
+        let client = NexusClient::new(config);
 
         Ok(())
     }

@@ -3,10 +3,13 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
+use crate::mod_platforms::nexus::config;
+
 pub mod nexus;
 
 pub trait ModPlatform {
     fn setup(&self) -> anyhow::Result<()>;
+    fn download_mod(&self) -> anyhow::Result<()>;
 }
 
 #[derive(clap::ValueEnum, Debug, Clone, Serialize, Deserialize, EnumIter)]
