@@ -6,7 +6,7 @@ use reqwest::{
 };
 use serde::Deserialize;
 
-use crate::mod_platforms::nexus::config::Config;
+use crate::sources::nexus::config::Config;
 
 const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 

@@ -1,16 +1,16 @@
 use clap::Args;
 
-use crate::mod_platforms::ModPlatformKind;
+use crate::sources::Source;
 
 #[derive(Args)]
 pub struct Connect {
     #[arg(value_enum)]
-    pub mod_platform: ModPlatformKind,
+    pub source: Source,
 }
 
 impl Connect {
     pub fn run(&self) -> anyhow::Result<()> {
-        self.mod_platform.setup()?;
+        self.source.setup()?;
         Ok(())
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    mod_platforms::nexus::{self, NexusPlatform},
+    sources::nexus::{self, NexusPlatform},
 };
 
 pub struct Add;

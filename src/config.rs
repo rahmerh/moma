@@ -10,7 +10,7 @@ use std::{
 };
 
 use crate::{
-    mod_platforms::ModPlatformKind,
+    sources::Source,
     utils::{fs::ExpandTilde, os::permissions, theme},
 };
 
@@ -39,8 +39,8 @@ pub struct GameConfig {
     /// Environment variables to be set before game launch
     pub env: Option<HashMap<String, String>>,
 
-    /// All mod platforms to be used to manage mods for this game
-    pub mod_platforms: Vec<ModPlatformKind>,
+    /// All sources to be used to get mods for this game
+    pub sources: Vec<Source>,
 }
 
 impl GameConfig {

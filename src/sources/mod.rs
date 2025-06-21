@@ -3,35 +3,31 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
-use crate::mod_platforms::nexus::config;
-
 pub mod nexus;
 
-pub trait ModPlatform {
-    fn setup(&self) -> anyhow::Result<()>;
-    fn download_mod(&self) -> anyhow::Result<()>;
-}
-
 #[derive(clap::ValueEnum, Debug, Clone, Serialize, Deserialize, EnumIter)]
-pub enum ModPlatformKind {
+pub enum Source {
     Nexus,
+    Test,
 }
 
-impl ModPlatformKind {
+impl Source {
     pub fn setup(&self) -> anyhow::Result<()> {
         match self {
-            ModPlatformKind::Nexus => {
+            Source::Nexus => {
                 let platform = nexus::NexusPlatform;
                 platform.setup()
             }
+            Source::Test => todo!(),
         }
     }
 }
 
-impl Display for ModPlatformKind {
+impl Display for Source {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModPlatformKind::Nexus => write!(f, "Nexus"),
+            Source::Nexus => write!(f, "Nexus"),
+            Source::Test => write!(f, "Test"),
         }
     }
 }

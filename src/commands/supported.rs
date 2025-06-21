@@ -2,7 +2,7 @@ use clap::Args;
 use owo_colors::OwoColorize;
 use strum::IntoEnumIterator;
 
-use crate::{games, mod_platforms::ModPlatformKind};
+use crate::{games, sources::Source};
 
 #[derive(Args)]
 pub struct Supported;
@@ -20,7 +20,7 @@ impl Supported {
             "\nSupported mod platforms:\n".bold().underline().cyan()
         );
 
-        for platform in ModPlatformKind::iter() {
+        for platform in Source::iter() {
             println!(" ➤ {}", platform.to_string().to_lowercase().bold());
         }
 

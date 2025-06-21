@@ -1,15 +1,15 @@
 use anyhow::Context;
 use clap::Args;
-use dialoguer::{Confirm, Input, MultiSelect, Select, theme::ColorfulTheme};
+use dialoguer::{Confirm, MultiSelect, Select, theme::ColorfulTheme};
 use owo_colors::OwoColorize;
 use std::path::{Path, PathBuf};
 
 use crate::{
     config::{Config, GameConfig},
-    games::GameProfile,
-    mod_platforms::ModPlatformKind,
-    prompt::reorder,
-    utils::{fs::ExpandTilde, theme},
+    games::{self, GameProfile},
+    sources::Source,
+    ui::{prompt, reorder},
+    utils::fs::ExpandTilde,
 };
 
 #[derive(Args)]
@@ -19,21 +19,20 @@ impl Init {
     pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         println!("\n{}\n", "Moma initial setup".bold().underline().cyan());
 
-        let theme = theme::default_theme();
-
         let steam_dir = config
             .get_steam_dir()
             .with_context(|| "Could not determine steam dir")?;
-        let game = match determine_game(&config, &theme)? {
+        let game = match determine_game(games::get_supported_games(), &config)? {
             Some(game) => game,
             None => return Ok(()),
         };
 
         let game_key = game.name().to_lowercase();
         let game_ref = &*game;
-        let game_install_dir = determine_game_installation_dir(game_ref, &steam_dir, &theme)?;
+        let game_install_dir = determine_game_installation_dir(game_ref, &steam_dir)?;
         let proton_dir = determine_proton(&steam_dir, game_ref, &theme)?;
-        let mod_platforms = determine_desired_mod_platforms(game_ref, &theme)?;
+        let sources = determine_desired_sources(game_ref, &theme)
+            .with_context(|| "Could not determine mod sources, please try again.")?;
 
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
@@ -42,7 +41,7 @@ impl Init {
         println!("Path: \"{}\"", game_install_dir.display().bold());
         println!(
             "Mod platforms: \"{}\"",
-            mod_platforms
+            sources
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<_>>()
@@ -68,7 +67,7 @@ impl Init {
             name: game_key.clone(),
             proton_dir,
             env: None,
-            mod_platforms: mod_platforms,
+            sources: sources,
         };
 
         config.games.insert(game_key.clone(), game_config);
@@ -93,17 +92,13 @@ impl Init {
 }
 
 fn determine_game(
+    games: Vec<Box<dyn GameProfile>>,
     config: &Config,
-    theme: &ColorfulTheme,
 ) -> anyhow::Result<Option<Box<dyn GameProfile>>> {
-    let games = crate::games::get_supported_games();
-    let labels: Vec<String> = games.iter().map(|g| g.name().to_string()).collect();
+    let game_names: Vec<String> = games.iter().map(|g| g.name().to_string()).collect();
 
-    println!("{}", "Available games".bold().cyan());
-    let selection = Select::with_theme(theme)
-        .items(&labels)
-        .default(0)
-        .interact()?;
+    let selection = Select::new().items(&game_names).default(0).interact()?;
+
     let game = games
         .into_iter()
         .nth(selection)
@@ -111,24 +106,8 @@ fn determine_game(
 
     let game_name = game.name().to_lowercase();
 
-    println!(
-        "\n{} {}\n",
-        "Setting up modding support for".bold().cyan(),
-        game_name.bold().white()
-    );
-
     if config.games.contains_key(&game_name) {
-        let confirmation = Confirm::with_theme(theme)
-            .with_prompt(format!(
-                "Configuration for {} already exists. Reconfigure?",
-                game_name.yellow()
-            ))
-            .interact()?;
-
-        if !confirmation {
-            println!("{}", "Exiting setup.".yellow());
-            return Ok(None);
-        }
+        return Ok(None); // Signal reconfigure prompt
     }
 
     Ok(Some(game))
@@ -137,31 +116,15 @@ fn determine_game(
 fn determine_game_installation_dir(
     game: &dyn GameProfile,
     steam_dir: &Path,
-    theme: &ColorfulTheme,
 ) -> anyhow::Result<PathBuf> {
     let default_game_path = game.default_game_path(steam_dir).expand();
-    let path = Input::with_theme(theme)
-        .with_prompt(format!(
-            "Enter installation path for {}",
-            game.name().cyan()
-        ))
-        .default(default_game_path.display().to_string())
-        .validate_with(|input: &String| {
-            let path = Path::new(input.trim());
 
-            if !path.exists() {
-                return Err("Path does not exist.");
-            }
+    let path = prompt::prompt_for_path(
+        &format!("Enter installation path for {}", game.name().cyan()),
+        Some(&default_game_path.display().to_string()),
+    )?;
 
-            if !path.join(game.game_executable()).is_file() {
-                return Err("Game executable not found in this folder.");
-            }
-
-            Ok(())
-        })
-        .interact_text()?;
-
-    Ok(PathBuf::from(path.trim()).expand())
+    Ok(path)
 }
 
 fn determine_proton(
@@ -205,11 +168,11 @@ fn determine_proton(
     Ok(entries[selection].path())
 }
 
-fn determine_desired_mod_platforms(
+fn determine_desired_sources(
     game: &dyn GameProfile,
     theme: &ColorfulTheme,
-) -> anyhow::Result<Vec<ModPlatformKind>> {
-    let supported = game.supported_mod_platforms();
+) -> anyhow::Result<Vec<Source>> {
+    let supported = game.supported_sources();
 
     if supported.len() == 1 {
         return Ok(supported);
@@ -235,10 +198,21 @@ fn determine_desired_mod_platforms(
         }
     }
 
-    let mut selected_platforms: Vec<ModPlatformKind> = selection
+    let mut selected_platforms: Vec<Source> = selection
         .into_iter()
         .map(|i| supported[i].clone())
         .collect();
+
+    if selected_platforms.len() == 1 {
+        return Ok(selected_platforms);
+    }
+
+    println!(
+        "{}",
+        "\nPlease order the following mod sources in order of priority:"
+            .bold()
+            .cyan()
+    );
 
     selected_platforms = reorder::reorder_items(selected_platforms)?;
 

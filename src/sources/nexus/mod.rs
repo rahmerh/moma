@@ -4,23 +4,15 @@ use anyhow::Context;
 use dialoguer::{Confirm, Input, Password};
 use owo_colors::OwoColorize;
 
-use crate::{
-    mod_platforms::{
-        ModPlatform,
-        nexus::{client::NexusClient, config::Config},
-    },
-    utils::theme,
-};
+use crate::sources::nexus::{client::NexusClient, config::Config};
 
 mod client;
 pub mod config;
 
 pub struct NexusPlatform;
 
-impl ModPlatform for NexusPlatform {
-    fn setup(&self) -> anyhow::Result<()> {
-        let theme = theme::default_theme();
-
+impl NexusPlatform {
+    pub fn setup(&self) -> anyhow::Result<()> {
         if config::api_key_exists() {
             let confirmation = Confirm::with_theme(&theme)
                 .with_prompt("Nexus connection already set up, do you want to overwrite?")
@@ -86,7 +78,7 @@ impl ModPlatform for NexusPlatform {
         Ok(())
     }
 
-    fn download_mod(&self, config: &Config) -> anyhow::Result<()> {
+    pub fn download_mod(&self, config: &Config) -> anyhow::Result<()> {
         let client = NexusClient::new(config);
 
         Ok(())

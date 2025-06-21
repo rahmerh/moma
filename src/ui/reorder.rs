@@ -15,8 +15,17 @@ use crossterm::{
 use owo_colors::OwoColorize;
 
 pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Vec<T>> {
+    let total_height = items.len() + 3;
+
     let mut cursor_index = 0;
     let mut selected_index: Option<usize> = None;
+
+    println!(
+        "\n{}\n",
+        "<↑/↓> move \\ <space> select/unselect \\ <enter> confirm \\ <q> quit"
+            .italic()
+            .truecolor(100, 100, 100)
+    );
 
     terminal::enable_raw_mode()?;
 
@@ -29,9 +38,9 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
         for (i, item) in items.iter().enumerate() {
             queue!(stdout, terminal::Clear(ClearType::CurrentLine))?;
             let styled_item = if Some(i) == selected_index {
-                format!("{}", item).bold().cyan().to_string()
+                format!("{}: {}", i + 1, item).bold().cyan().to_string()
             } else {
-                format!("{}", item)
+                format!("{}: {}", i + 1, item)
             };
 
             if i == cursor_index {
@@ -78,8 +87,16 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
                         }
                     }
                     KeyCode::Enter => break,
-                    KeyCode::Char('q') => bail!("Process was interrupted by user"),
+                    KeyCode::Char('q') => {
+                        execute!(stdout, cursor::MoveTo(0, y))?;
+                        terminal::disable_raw_mode()?;
+                        erase_previous_lines(total_height)?;
+                        bail!("Process was interrupted by user")
+                    }
                     KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        execute!(stdout, cursor::MoveTo(0, y))?;
+                        terminal::disable_raw_mode()?;
+                        erase_previous_lines(total_height)?;
                         bail!("Process was interrupted by user")
                     }
                     _ => {}
@@ -90,8 +107,33 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
     execute!(stdout, terminal::Clear(terminal::ClearType::FromCursorDown))?;
     execute!(stdout, cursor::MoveTo(0, y))?;
     execute!(stdout, cursor::Show)?;
+    erase_previous_lines(total_height)?;
 
     terminal::disable_raw_mode()?;
 
+    println!(
+        "{}: {}",
+        "Final list order".bold().cyan(),
+        items
+            .iter()
+            .map(|item| item.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+
     Ok(items)
+}
+
+fn erase_previous_lines(count: usize) -> anyhow::Result<()> {
+    let mut stdout = stdout();
+
+    for _ in 0..count {
+        execute!(
+            stdout,
+            cursor::MoveUp(1),
+            terminal::Clear(ClearType::CurrentLine)
+        )?;
+    }
+
+    Ok(())
 }

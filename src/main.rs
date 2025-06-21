@@ -2,8 +2,8 @@ mod cli;
 mod commands;
 mod config;
 mod games;
-mod mod_platforms;
-mod prompt;
+mod sources;
+mod ui;
 mod utils;
 
 use clap::Parser;
