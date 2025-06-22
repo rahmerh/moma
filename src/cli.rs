@@ -6,7 +6,7 @@ use crate::{
         connect::Connect, context::Context, init::Init, launch::Launch, supported::Supported,
     },
     config::Config,
-    utils::state,
+    utils::{state, string::StringUtils},
 };
 
 #[derive(Parser)]
@@ -39,11 +39,11 @@ pub enum Command {
 impl Cli {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         if let Some(game) = state::read_game_context()? {
-            println!("{} {}{}", "[Current game:".cyan(), game.bold(), "]".cyan());
+            println!("{}{}{}", "[".cyan(), game.capitalize().bold(), "]".cyan());
         }
 
         match &self.command {
-            Some(Command::Init(cmd)) => cmd.run(config),
+            Some(Command::Init(cmd)) => cmd.run(config).await,
             Some(Command::Launch(cmd)) => cmd.run(config),
             Some(Command::Supported(cmd)) => cmd.run(),
             Some(Command::Connect(cmd)) => cmd.run().await,

@@ -1,12 +1,13 @@
 use anyhow::Context;
+use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use owo_colors::OwoColorize;
 use pelite::{FileMap, PeFile, resources::version_info::VersionInfo};
-use reqwest::blocking::get;
+use reqwest::get;
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::copy,
+    io::{Write, copy},
     path::{Path, PathBuf},
 };
 
@@ -50,6 +51,7 @@ impl SkyrimSe {
     }
 }
 
+#[async_trait]
 impl GameProfile for SkyrimSe {
     fn name(&self) -> &'static str {
         "SkyrimSE"
@@ -70,7 +72,7 @@ impl GameProfile for SkyrimSe {
         "skse64_loader.exe"
     }
 
-    fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
+    async fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
         if !prompt::confirm("Do you want to setup SKSE?")? {
             println!("{}", "\nSkipping SKSE setup.".yellow());
             return Ok(());
@@ -106,9 +108,9 @@ impl GameProfile for SkyrimSe {
             .get(&game_version[..3])
             .with_context(|| format!("Unsupported game version: {}", game_version))?;
 
-        let mut response = get(url.to_string())?;
+        let bytes = get(url.to_string()).await?.bytes().await?;
         let mut out = File::create(&skse_archive_path)?;
-        copy(&mut response, &mut out)?;
+        out.write_all(&bytes)?;
 
         print::print_inline_status("Extracting archive...")?;
 

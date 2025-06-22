@@ -92,7 +92,7 @@ moma mod <game>
 This sets a temporary game context stored in /tmp/moma_state, which will be used by all subsequent commands. You’ll see a note like:
 
 ```sh
-[Current game: SkyrimSE]
+[Skyrimse]
 ```
 
 This session then allows you to run commands like:

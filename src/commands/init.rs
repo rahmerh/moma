@@ -15,7 +15,7 @@ use crate::{
 pub struct Init;
 
 impl Init {
-    pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
+    pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         println!("\n{}\n", "Moma initial setup".bold().underline().cyan());
 
         let steam_dir = config
@@ -88,7 +88,7 @@ impl Init {
             .games
             .get(&game_name_lower)
             .expect("Could not store game configuration.");
-        game.setup_modding(config, saved_config)?;
+        game.setup_modding(config, saved_config).await?;
 
         Ok(())
     }

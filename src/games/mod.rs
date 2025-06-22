@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use async_trait::async_trait;
+
 use crate::{
     config::{Config, GameConfig},
     games::skyrimse::SkyrimSe,
@@ -9,12 +11,13 @@ use crate::{
 pub mod context;
 pub mod skyrimse;
 
+#[async_trait]
 pub trait GameProfile {
     fn name(&self) -> &'static str;
     fn default_game_path(&self, steam_dir: &Path) -> PathBuf;
     fn game_executable(&self) -> &'static str;
     fn game_mod_executable(&self) -> &'static str;
-    fn setup_modding(&self, config: &Config, config: &GameConfig) -> anyhow::Result<()>;
+    async fn setup_modding(&self, config: &Config, config: &GameConfig) -> anyhow::Result<()>;
     fn supported_sources(&self) -> Vec<Source>;
 }
 
