@@ -10,6 +10,8 @@ To keep your game installation untouched, Moma builds a temporary environment wh
 
 Moma avoids Windows-native mod management tools and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
 
+**⚠️ Warning! Moma is in early development. It will break. You’ve been warned.**
+
 ## Installation
 
 Make sure you have [Rust](https://www.rust-lang.org/tools/install) installed first. Then clone the repo:
