@@ -113,21 +113,16 @@ See `docs/config.md` for all options.
 ## Roadmap
 
 ### Done
-✓ Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
-
-✓ Installation guide (Makefile + instructions)
+- Initial proof-of-concept in Rust: folder structure, mount logic, and game launch support (Skyrim)
+- Installation guide (Makefile + instructions)
 
 ### In progress
-Mod management process
-- Entering a game context
-- Searching mods
-- Downloading mods for that game
+NXM link handler (Nexus download URLs)
 
 ### Planned
 - (Unit) tests
 - Load order management
 - Declarative mod installation
-- NXM link handler (Nexus download URLs)
 - Mod management commands (search, update, etc.)
 - FOMOD CLI wizard
 - Proper error handling (remove anyhow crate)

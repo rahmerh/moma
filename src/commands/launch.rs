@@ -34,7 +34,7 @@ impl Launch {
         let game = match self.game_name {
             Some(ref game) => game.clone(),
             None => {
-                let state = state::read_game_context()?
+                let state = state::current_context()?
                     .ok_or_else(|| anyhow::anyhow!(
                         "No game provided and no context is set. Either provide a game to launch or set a context."
                     ))?;

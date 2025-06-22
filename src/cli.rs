@@ -38,7 +38,7 @@ pub enum Command {
 
 impl Cli {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
-        if let Some(game) = state::read_game_context()? {
+        if let Some(game) = state::current_context()? {
             println!("{}{}{}", "[".cyan(), game.capitalize().bold(), "]".cyan());
         }
 

@@ -10,12 +10,12 @@ pub struct Context {
 impl Context {
     pub fn run(&self) -> anyhow::Result<()> {
         if self.game.to_lowercase() == "clear" {
-            state::clear_game_context()?;
+            state::clear_context()?;
 
             return Ok(());
         }
 
-        state::set_game_context(self.game.as_str())?;
+        state::set_context(self.game.as_str())?;
 
         Ok(())
     }

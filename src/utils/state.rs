@@ -7,7 +7,7 @@ use crate::config::Config;
 
 const STATE_FILE: &str = "/tmp/moma_state";
 
-pub fn read_game_context() -> anyhow::Result<Option<String>> {
+pub fn current_context() -> anyhow::Result<Option<String>> {
     let path = PathBuf::from(STATE_FILE);
 
     if !path.exists() {
@@ -26,7 +26,7 @@ pub fn read_game_context() -> anyhow::Result<Option<String>> {
     }
 }
 
-pub fn clear_game_context() -> anyhow::Result<()> {
+pub fn clear_context() -> anyhow::Result<()> {
     let file = PathBuf::from(STATE_FILE);
 
     if file.exists() {
@@ -39,7 +39,7 @@ pub fn clear_game_context() -> anyhow::Result<()> {
     return Ok(());
 }
 
-pub fn set_game_context(game: &str) -> anyhow::Result<()> {
+pub fn set_context(game: &str) -> anyhow::Result<()> {
     let config = Config::load_or_default()?;
 
     let game = game.trim().to_lowercase();
