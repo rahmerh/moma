@@ -81,6 +81,22 @@ moma supported
 
 For more information about the correct usage, see `docs/usage.md`
 
+## Game context
+
+Moma supports setting a temporary game context so you don’t have to specify the game every time.
+
+```sh
+moma mod <game>
+```
+
+This sets a temporary game context stored in /tmp/moma_state, which will be used by all subsequent commands. You’ll see a note like:
+
+```sh
+[Current game: <game>]
+```
+
+This context resets when you reboot or change it via the same command.
+
 ## Configuration
 
 Moma stores configuration in a single TOML file, at `~/.config/moma/config.toml`.
@@ -97,7 +113,10 @@ See `docs/config.md` for all options.
 ✓ Installation guide (Makefile + instructions)
 
 ### In progress
-Mod installation and removal
+Mod management process
+- Entering a game context
+- Searching mods
+- Downloading mods for that game
 
 ### Planned
 - (Unit) tests
