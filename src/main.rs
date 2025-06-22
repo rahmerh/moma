@@ -12,7 +12,8 @@ use owo_colors::OwoColorize;
 
 use crate::{cli::Cli, config::Config};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
     std::panic::set_hook(Box::new(|info| {
         eprintln!("{} {}", "Encountered a panic:".red().bold(), info);
@@ -21,7 +22,7 @@ fn main() {
 
     let cli = Cli::parse();
 
-    if let Err(err) = run(&cli) {
+    if let Err(err) = run(&cli).await {
         eprintln!("{} {}", "Encountered a problem:".red().bold(), err);
 
         for cause in err.chain().skip(1) {
@@ -31,8 +32,8 @@ fn main() {
     }
 }
 
-fn run(cli: &Cli) -> anyhow::Result<()> {
+async fn run(cli: &Cli) -> anyhow::Result<()> {
     let mut config = Config::load_or_default()?;
-    cli.run(&mut config)?;
+    cli.run(&mut config).await?;
     Ok(())
 }

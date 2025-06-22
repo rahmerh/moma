@@ -32,15 +32,21 @@ impl Source {
         }
     }
 
-    pub fn setup(&self) -> anyhow::Result<()> {
+    pub async fn setup(&self) -> anyhow::Result<()> {
         match self {
-            Source::Nexus => Nexus::setup(),
+            Source::Nexus => Nexus::setup().await,
         }
     }
 
-    pub fn get_mod_files(&self, game: &str, mod_id: &str) -> anyhow::Result<ModFiles> {
+    pub async fn get_mod_files(&self, game: &str, mod_id: &str) -> anyhow::Result<ModFiles> {
         match self {
-            Source::Nexus => Nexus::get_mod_files(game, mod_id),
+            Source::Nexus => Nexus::get_mod_files(game, mod_id).await,
+        }
+    }
+
+    pub async fn download_file(&self, file: &ModFile) -> anyhow::Result<()> {
+        match self {
+            Source::Nexus => Nexus::download_file(file).await,
         }
     }
 }

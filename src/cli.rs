@@ -1,9 +1,7 @@
 use clap::{Parser, Subcommand};
 
 use crate::{
-    commands::{
-        connect::Connect, init::Init, launch::Launch, modctl::add::Add, supported::Supported,
-    },
+    commands::{connect::Connect, init::Init, launch::Launch, supported::Supported},
     config::Config,
 };
 
@@ -30,40 +28,15 @@ pub enum Command {
     Supported(Supported),
     #[command(about = "Automatically connect to your desired mod platforms for downloads")]
     Connect(Connect),
-    #[command(about = "Mod control commands")]
-    Mod {
-        game: String,
-
-        #[command(subcommand)]
-        action: ModAction,
-    },
-}
-
-#[derive(Subcommand)]
-pub enum ModAction {
-    #[command(about = "Adds the mod with corresponding mod id to the game's mod folder.")]
-    Add {
-        /// The mod's nexus id.
-        mod_id: String,
-    },
-}
-
-impl ModAction {
-    pub fn run(&self, game: &str, config: &mut Config) -> anyhow::Result<()> {
-        match self {
-            ModAction::Add { mod_id } => Add::run(game, mod_id, config),
-        }
-    }
 }
 
 impl Cli {
-    pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
+    pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         match &self.command {
             Some(Command::Init(cmd)) => cmd.run(config),
             Some(Command::Launch(cmd)) => cmd.run(config),
             Some(Command::Supported(cmd)) => cmd.run(),
-            Some(Command::Connect(cmd)) => cmd.run(),
-            Some(Command::Mod { game, action }) => action.run(game, config),
+            Some(Command::Connect(cmd)) => cmd.run().await,
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;

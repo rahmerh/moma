@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{process::Command, time::Duration};
 
 use anyhow::Context;
 use owo_colors::OwoColorize;
@@ -22,7 +22,7 @@ impl Nexus {
             .unwrap_or(false)
     }
 
-    pub fn setup() -> anyhow::Result<()> {
+    pub async fn setup() -> anyhow::Result<()> {
         if Self::is_setup() {
             if !prompt::confirm("Nexus connection already set up, do you want to overwrite?")? {
                 println!("{}", "Exiting setup.".yellow());
@@ -46,13 +46,18 @@ impl Nexus {
             .arg("https://www.nexusmods.com/users/myaccount?tab=api")
             .spawn()?;
 
-        let api_key = prompt::password_with_retry("Enter your Nexus API key", |key| {
-            NexusClient::validate_key(key)
-                .map(|_| key.to_string())
-                .map_err(|_| anyhow::anyhow!("Invalid API key"))
+        let api_key = prompt::password_with_retry("Enter your Nexus API key", |input| {
+            let rt = tokio::runtime::Handle::current();
+            rt.block_on(async {
+                NexusClient::validate_key(input)
+                    .await
+                    .map(|_| input.to_string())
+                    .map_err(|_| anyhow::anyhow!("Invalid API key"))
+            })
         })?;
 
         let nexus_user = NexusClient::validate_key(&api_key)
+            .await
             .with_context(|| "Could not validate the nexus API key")?;
 
         Config::save_api_key(&nexus_user.key)?;
@@ -71,28 +76,33 @@ impl Nexus {
         Ok(())
     }
 
-    pub fn get_mod_files(game: &str, mod_id: &str) -> anyhow::Result<ModFiles> {
+    pub async fn get_mod_files(game: &str, mod_id: &str) -> anyhow::Result<ModFiles> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
 
-        let files = client.get_files(game, mod_id)?;
-
+        let files = client.get_files(game, mod_id).await?;
         let mapped_files = mapper::map_mod_files(files);
 
         let mut result = ModFiles::default();
 
         for file in mapped_files {
-            match file.category.as_str() {
-                "MAIN" => result.main.push(file),
-                "OPTIONAL" => result.optional.push(file),
-                "UPDATE" => result.update.push(file),
-                "PATCH" => result.patch.push(file),
-                "MISC" => result.misc.push(file),
+            let category = file.category.as_deref().unwrap_or("").to_lowercase();
+
+            match category.as_str() {
+                "main" => result.main.push(file),
+                "optional" => result.optional.push(file),
+                "miscellaneous" => result.misc.push(file),
+                "old" => result.old_versions.push(file),
                 _ => result.uncategorized.push(file),
             }
         }
 
         Ok(result)
+    }
+
+    pub async fn download_file(file: &ModFile) -> anyhow::Result<()> {
+        tokio::time::sleep(Duration::from_secs(2)).await;
+        Ok(())
     }
 
     pub fn resolve_nexus_domain(game_key: &str) -> Option<&'static str> {

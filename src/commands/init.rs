@@ -154,20 +154,13 @@ fn determine_desired_sources(game: &dyn GameProfile) -> anyhow::Result<Vec<Sourc
         return Ok(supported);
     }
 
-    let labels: Vec<String> = supported.iter().map(|p| p.to_string()).collect();
-
-    let selected_indexes = prompt::select_multiple(
+    let mut selected_platforms = prompt::select_multiple(
         &format!(
             "Which mod platforms do you want to use for {}?",
             game.name()
         ),
-        &labels,
+        &supported,
     )?;
-
-    let mut selected_platforms: Vec<Source> = selected_indexes
-        .into_iter()
-        .map(|i| supported[i].clone())
-        .collect();
 
     if selected_platforms.len() == 1 {
         return Ok(selected_platforms);

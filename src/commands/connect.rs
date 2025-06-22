@@ -9,8 +9,8 @@ pub struct Connect {
 }
 
 impl Connect {
-    pub fn run(&self) -> anyhow::Result<()> {
-        self.source.setup()?;
+    pub async fn run(&self) -> anyhow::Result<()> {
+        self.source.setup().await?;
         Ok(())
     }
 }

@@ -105,19 +105,28 @@ pub fn select_path(prompt: &str, entries: Vec<PathBuf>) -> anyhow::Result<PathBu
     Ok(entries[index].clone())
 }
 
-pub fn select_multiple<'a>(prompt: &str, options: &'a [String]) -> anyhow::Result<Vec<usize>> {
+pub fn select_multiple<T: Display + Clone>(prompt: &str, options: &[T]) -> anyhow::Result<Vec<T>> {
     let theme = theme::default_theme();
+
+    let mut sorted_items: Vec<T> = options.to_vec();
+    sorted_items.sort_by(|a, b| a.to_string().cmp(&b.to_string()));
+
+    let labels: Vec<String> = sorted_items.iter().map(|item| item.to_string()).collect();
 
     loop {
         let selection = MultiSelect::with_theme(&theme)
             .with_prompt(prompt)
-            .items(options)
+            .items(&labels)
             .interact()?;
 
         if selection.is_empty() {
             println!("{}", "Please select at least one option.".red());
         } else {
-            return Ok(selection);
+            let selected_items = selection
+                .into_iter()
+                .map(|i| sorted_items[i].clone())
+                .collect();
+            return Ok(selected_items);
         }
     }
 }
