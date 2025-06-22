@@ -1,12 +1,11 @@
 use anyhow::Context;
-use dialoguer::Confirm;
 use once_cell::sync::Lazy;
 use owo_colors::OwoColorize;
 use pelite::{FileMap, PeFile, resources::version_info::VersionInfo};
 use reqwest::blocking::get;
 use std::{
     collections::HashMap,
-    fs::{self, File, create_dir_all},
+    fs::{self, File},
     io::copy,
     path::{Path, PathBuf},
 };
@@ -14,10 +13,10 @@ use std::{
 use crate::{
     config::{CACHE_DIR_NAME, Config, GameConfig, MODS_DIR_NAME},
     sources::Source,
+    ui::prompt,
     utils::{
         fs::{ExpandTilde, extract_archive},
         print::print_inline_status,
-        theme,
     },
 };
 
@@ -75,13 +74,7 @@ impl GameProfile for SkyrimSe {
     }
 
     fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
-        let theme = theme::default_theme();
-
-        let confirmed = Confirm::with_theme(&theme)
-            .with_prompt("Do you want to setup SKSE?")
-            .interact()?;
-
-        if !confirmed {
+        if !prompt::confirm("Do you want to setup SKSE?")? {
             println!("{}", "\nSkipping SKSE setup.".yellow());
             return Ok(());
         }
@@ -95,11 +88,7 @@ impl GameProfile for SkyrimSe {
         let skse_archive_path = cache_dir.join("skse.7z");
 
         if skse_output_dir.exists() {
-            let confirmed = Confirm::with_theme(&theme)
-                .with_prompt("SKSE already downloaded, do you want to overwrite?")
-                .interact()?;
-
-            if confirmed {
+            if prompt::confirm("SKSE already downloaded, do you want to overwrite?")? {
                 fs::remove_dir_all(&skse_output_dir)?;
             } else {
                 return Ok(());
@@ -108,8 +97,8 @@ impl GameProfile for SkyrimSe {
 
         println!("{}", "\nSetting up SKSE\n".bold().cyan());
 
-        create_dir_all(&cache_dir)?;
-        create_dir_all(&mods_dir)?;
+        fs::create_dir_all(&cache_dir)?;
+        fs::create_dir_all(&mods_dir)?;
 
         print_inline_status(
             format!("Downloading SKSE to \"{}\"", cache_dir.to_string_lossy()).as_ref(),
@@ -142,6 +131,6 @@ impl GameProfile for SkyrimSe {
     }
 
     fn supported_sources(&self) -> Vec<Source> {
-        vec![Source::Nexus, Source::Test]
+        vec![Source::Nexus]
     }
 }

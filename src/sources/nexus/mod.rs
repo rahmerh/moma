@@ -1,24 +1,22 @@
 use std::process::Command;
 
 use anyhow::Context;
-use dialoguer::{Confirm, Input, Password};
 use owo_colors::OwoColorize;
 
-use crate::sources::nexus::{client::NexusClient, config::Config};
+use crate::{
+    sources::nexus::{client::NexusClient, config::Config},
+    ui::prompt,
+};
 
 mod client;
 pub mod config;
 
-pub struct NexusPlatform;
+pub struct Nexus;
 
-impl NexusPlatform {
-    pub fn setup(&self) -> anyhow::Result<()> {
+impl Nexus {
+    pub fn setup() -> anyhow::Result<()> {
         if config::api_key_exists() {
-            let confirmation = Confirm::with_theme(&theme)
-                .with_prompt("Nexus connection already set up, do you want to overwrite?")
-                .interact()?;
-
-            if !confirmation {
+            if !prompt::confirm("Nexus connection already set up, do you want to overwrite?")? {
                 println!("{}", "Exiting setup.".yellow());
                 return Ok(());
             }
@@ -34,38 +32,25 @@ impl NexusPlatform {
             "3. Paste the key into the prompt below and submit."
         );
 
-        let _ = Input::<String>::new()
-            .with_prompt("Press Enter to begin")
-            .allow_empty(true)
-            .interact_text();
+        let _ = prompt::input("Press Enter to begin", true)?;
 
         Command::new("xdg-open")
             .arg("https://www.nexusmods.com/users/myaccount?tab=api")
             .spawn()?;
 
-        let response;
-        loop {
-            let input = Password::with_theme(&theme)
-                .with_prompt("Enter your Nexus API key")
-                .interact()
-                .with_context(|| "Failed to read input")?;
+        let api_key = prompt::password_with_retry("Enter your Nexus API key", |key| {
+            NexusClient::validate_key(key)
+                .map(|_| key.to_string())
+                .map_err(|_| anyhow::anyhow!("Invalid API key"))
+        })?;
 
-            match NexusClient::validate_key(&input) {
-                Ok(r) => {
-                    println!("Authenticated as Nexus user: {}", r.name);
-                    response = r;
-                    break;
-                }
-                Err(_) => {
-                    eprintln!("{}{}", "Invalid key".red(), ", please try again.");
-                }
-            }
-        }
+        let nexus_user = NexusClient::validate_key(&api_key)
+            .with_context(|| "Could not validate the nexus API key")?;
 
-        Config::save_api_key(&response.key)?;
+        Config::save_api_key(&nexus_user.key)?;
         let mut config = Config::load()?;
-        config.username = Some(response.name);
-        config.is_premium = response.is_premium;
+        config.username = Some(nexus_user.name);
+        config.is_premium = nexus_user.is_premium;
         config.save()?;
 
         println!(

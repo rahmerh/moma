@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    sources::nexus::{self, NexusPlatform},
+    sources::nexus::{self, Nexus},
 };
 
 pub struct Add;

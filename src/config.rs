@@ -1,6 +1,7 @@
 use anyhow::bail;
 use dialoguer::Input;
 use libc::{getpwuid, uid_t};
+use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -11,7 +12,8 @@ use std::{
 
 use crate::{
     sources::Source,
-    utils::{fs::ExpandTilde, os::permissions, theme},
+    ui::prompt,
+    utils::{fs::ExpandTilde, os::permissions},
 };
 
 pub const CACHE_DIR_NAME: &str = ".cache";
@@ -123,22 +125,15 @@ impl Config {
             }
         }
 
-        let manual_path = Input::with_theme(&theme::default_theme())
-            .with_prompt("Enter your Steam installation directory")
-            .validate_with(|input: &String| {
-                let path = Path::new(input.trim()).expand();
-                if is_valid_steam_dir(&path) {
-                    Ok(())
-                } else {
-                    Err("Not a valid Steam installation directory.")
-                }
-            })
-            .interact_text()?;
-
-        let steam_dir = PathBuf::from(manual_path.trim()).expand();
-        self.steam_dir = Some(steam_dir.clone());
-
-        Ok(steam_dir)
+        loop {
+            let path = prompt::path("Enter your Steam installation directory", None)?;
+            if is_valid_steam_dir(&path) {
+                self.steam_dir = Some(path.clone());
+                return Ok(path);
+            } else {
+                println!("{}", "Not a valid Steam directory, please try again.".red());
+            }
+        }
     }
 
     pub fn save(&self) -> anyhow::Result<()> {

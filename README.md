@@ -106,6 +106,7 @@ Mod installation and removal
 - NXM link handler (Nexus download URLs)
 - Mod management commands (search, update, etc.)
 - FOMOD CLI wizard
+- Proper error handling (remove anyhow crate)
 - Logging for debug purposes
 - Proper usage- and in depth documentation
 
