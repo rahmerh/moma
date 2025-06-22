@@ -66,29 +66,20 @@ Moma only supports certain game platforms and games (and game versions). This is
 ```sh
 moma init
 ```
-
-Starts the game setup wizard, guiding you through configuration, paths, and required tools.
-
 ### Launch a game
 ```sh
 sudo moma launch <game>
 ```
-
-Launches the game with mods layered in via an overlay. Requires root privileges due to mounting.
-
 ### Connect to a mod platform
 ```sh
 moma connect <platform>
 ```
-
-Connects to the specified platform and stores required information locally for future mod management commands.
-
 ### List supported games/platforms
 ```sh
 moma supported
 ```
 
-Lists all supported games and mod platforms, these values can be used by the commands mentioned above.
+For more information about the correct usage, see `docs/usage.md`
 
 ## Configuration
 
