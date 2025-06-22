@@ -19,9 +19,9 @@ pub fn default_theme() -> ColorfulTheme {
         error_style: red_style,
         hint_style: yellow_style,
         values_style: white_style.clone(),
-        active_item_prefix: cyan_style.apply_to("❯".to_string()),
+        active_item_prefix: cyan_style.apply_to("❯".to_string()).clone(),
         inactive_item_prefix: black_style.apply_to(" ".to_string()),
-        active_item_style: white_style.clone(),
+        active_item_style: cyan_style,
         inactive_item_style: white_style,
         ..Default::default()
     }
