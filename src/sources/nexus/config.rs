@@ -66,14 +66,6 @@ impl Config {
     }
 }
 
-pub fn api_key_exists() -> bool {
-    if let Some(key_path) = config::resolve_config_file_path(API_KEY_FILE_NAME) {
-        key_path.exists()
-    } else {
-        false
-    }
-}
-
 impl Default for Config {
     fn default() -> Self {
         Self {

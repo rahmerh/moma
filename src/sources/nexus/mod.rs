@@ -14,8 +14,15 @@ pub mod config;
 pub struct Nexus;
 
 impl Nexus {
+    pub fn is_setup() -> bool {
+        match Config::load() {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
     pub fn setup() -> anyhow::Result<()> {
-        if config::api_key_exists() {
+        if Self::is_setup() {
             if !prompt::confirm("Nexus connection already set up, do you want to overwrite?")? {
                 println!("{}", "Exiting setup.".yellow());
                 return Ok(());
