@@ -11,13 +11,14 @@ use crate::{
     utils::{
         fs::copy_dir,
         os::{mount, permissions},
+        state,
     },
 };
 
 #[derive(Args)]
 pub struct Launch {
     /// Name of the game to launch
-    pub game_name: String,
+    pub game_name: Option<String>,
 
     /// Forces the launch of the game, ignoring sanity checks like an empty sink folder.
     #[arg(short, long, global = true)]
@@ -30,15 +31,26 @@ impl Launch {
             bail!("This command must be run as root. Try again with `sudo`.");
         }
 
+        let game = match self.game_name {
+            Some(ref game) => game.clone(),
+            None => {
+                let state = state::read_game_context()?
+                    .ok_or_else(|| anyhow::anyhow!(
+                        "No game provided and no context is set. Either provide a game to launch or set a context."
+                    ))?;
+                state
+            }
+        };
+
         let steam_dir = config.get_steam_dir()?;
-        let context = GameContext::new(config, &self.game_name)?;
+        let context = GameContext::new(config, &game)?;
 
         if !context.validate_sink_is_empty()? {
             if self.force {
                 println!(
                     "{} You are running {} with a non-empty sink folder.\n{}",
                     "Warning!".red().bold().underline(),
-                    self.game_name.underline().bold(),
+                    game.underline().bold(),
                     "To prevent unexpected overwrites, move everything into appropriate mod folders.".yellow()
                 );
             } else {
@@ -49,7 +61,7 @@ impl Launch {
             }
         }
 
-        println!("Launching {}...", self.game_name.bold());
+        println!("Launching {}...", game.bold());
 
         print::print_inline_status(&format!("{}", "Mounting game folders...".bold()))?;
 
@@ -59,7 +71,7 @@ impl Launch {
         context.prepare_file_system()?;
 
         mount::mount_overlay_for(&context)
-            .with_context(|| format!("Could not mount overlay folders for {}", self.game_name))?;
+            .with_context(|| format!("Could not mount overlay folders for {}", game))?;
 
         print::print_inline_status(&format!("{}", "Copying mods into mounted folder...".bold()))?;
 
@@ -80,7 +92,7 @@ impl Launch {
             );
         }
 
-        print::print_inline_status(&format!("Launching {}...", self.game_name.bold()))?;
+        print::print_inline_status(&format!("Launching {}...", game.bold()))?;
 
         let mut proton_cmd = Command::new(context.proton_binary());
         proton_cmd.current_dir(&context.active_dir());

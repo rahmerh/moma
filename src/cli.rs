@@ -1,8 +1,12 @@
 use clap::{Parser, Subcommand};
+use owo_colors::OwoColorize;
 
 use crate::{
-    commands::{connect::Connect, init::Init, launch::Launch, supported::Supported},
+    commands::{
+        connect::Connect, context::Context, init::Init, launch::Launch, supported::Supported,
+    },
     config::Config,
+    utils::state,
 };
 
 #[derive(Parser)]
@@ -28,15 +32,22 @@ pub enum Command {
     Supported(Supported),
     #[command(about = "Automatically connect to your desired mod platforms for downloads")]
     Connect(Connect),
+    #[command(name = "mod", about = "Game mod context")]
+    Context(Context),
 }
 
 impl Cli {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
+        if let Some(game) = state::read_game_context()? {
+            println!("{} {}{}", "[Current game:".cyan(), game.bold(), "]".cyan());
+        }
+
         match &self.command {
             Some(Command::Init(cmd)) => cmd.run(config),
             Some(Command::Launch(cmd)) => cmd.run(config),
             Some(Command::Supported(cmd)) => cmd.run(),
             Some(Command::Connect(cmd)) => cmd.run().await,
+            Some(Command::Context(cmd)) => cmd.run(),
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;
