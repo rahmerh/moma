@@ -46,7 +46,7 @@ This will copy the binary to `/usr/local/bin/moma`. You can now run moma from an
 
 ## Support
 
-Moma only supports certain game platforms and games (and game versions). This is mostly due to that I'm not going to buy games I won't play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
+Moma only supports certain game platforms and games (and game versions). This is mostly because I won't buy games I'm not going to play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
 
 ### Supported game platforms
 
@@ -83,7 +83,7 @@ For more information about the correct usage, see `docs/usage.md`
 
 ## Game context
 
-Moma supports setting a temporary game context so you don’t have to specify the game every time.
+You can enter a temporary game context so you don’t need to specify the game every time.
 
 ```sh
 moma mod <game>
@@ -92,10 +92,15 @@ moma mod <game>
 This sets a temporary game context stored in /tmp/moma_state, which will be used by all subsequent commands. You’ll see a note like:
 
 ```sh
-[Current game: <game>]
+[Current game: SkyrimSE]
 ```
 
-This context resets when you reboot or change it via the same command.
+This session then allows you to run commands like:
+
+```sh
+sudo moma launch
+```
+Without having to specify the game. This context resets when you reboot or change/clear it manually.
 
 ## Configuration
 
@@ -137,4 +142,4 @@ I looked around. There are plenty of Linux CLI mod managers, but none of them sc
 
 Then I discovered overlayfs, which turned out to be perfect for mod management. It lets you layer mods cleanly, isolate writes into an upper directory, and when paired with a private namespace makes the whole thing seamless and invisible to the user. No performance hit, no mess.
 
-Finally, I thought: why not write it in a language I’ve never used? Might as well learn something from it, which is why I picked rust. Moma might not be the most feature-rich mod manager out there, or the best written one, but it’s one that felt right and that I genuinly want to use.
+Finally, I thought: why not write it in a language I’ve never used? Might as well learn something from it, which is why I picked rust. Moma might not be the most feature-rich mod manager out there, or the best written one, but it’s one that felt right and that I genuinely want to use.
