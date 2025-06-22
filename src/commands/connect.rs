@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::sources::{Source, nexus::Nexus};
+use crate::sources::Source;
 
 #[derive(Args)]
 pub struct Connect {
@@ -10,11 +10,7 @@ pub struct Connect {
 
 impl Connect {
     pub fn run(&self) -> anyhow::Result<()> {
-        match self.source {
-            Source::Nexus => {
-                Nexus::setup()?;
-            }
-        }
+        self.source.setup()?;
         Ok(())
     }
 }

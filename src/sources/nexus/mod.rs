@@ -5,20 +5,21 @@ use owo_colors::OwoColorize;
 
 use crate::{
     sources::nexus::{client::NexusClient, config::Config},
+    types::{ModFile, ModFiles},
     ui::prompt,
 };
 
 mod client;
 pub mod config;
+mod mapper;
 
 pub struct Nexus;
 
 impl Nexus {
     pub fn is_setup() -> bool {
-        match Config::load() {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        Config::load()
+            .map(|cfg| cfg.api_key.is_some())
+            .unwrap_or(false)
     }
 
     pub fn setup() -> anyhow::Result<()> {
@@ -70,9 +71,34 @@ impl Nexus {
         Ok(())
     }
 
-    pub fn download_mod(&self, config: &Config) -> anyhow::Result<()> {
-        let client = NexusClient::new(config);
+    pub fn get_mod_files(game: &str, mod_id: &str) -> anyhow::Result<ModFiles> {
+        let config = Config::load()?;
+        let client = NexusClient::new(&config)?;
 
-        Ok(())
+        let files = client.get_files(game, mod_id)?;
+
+        let mapped_files = mapper::map_mod_files(files);
+
+        let mut result = ModFiles::default();
+
+        for file in mapped_files {
+            match file.category.as_str() {
+                "MAIN" => result.main.push(file),
+                "OPTIONAL" => result.optional.push(file),
+                "UPDATE" => result.update.push(file),
+                "PATCH" => result.patch.push(file),
+                "MISC" => result.misc.push(file),
+                _ => result.uncategorized.push(file),
+            }
+        }
+
+        Ok(result)
+    }
+
+    pub fn resolve_nexus_domain(game_key: &str) -> Option<&'static str> {
+        match game_key.to_lowercase().as_str() {
+            "skyrimse" => Some("skyrimspecialedition"),
+            _ => None,
+        }
     }
 }

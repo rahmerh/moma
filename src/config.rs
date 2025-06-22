@@ -1,5 +1,4 @@
 use anyhow::bail;
-use dialoguer::Input;
 use libc::{getpwuid, uid_t};
 use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};

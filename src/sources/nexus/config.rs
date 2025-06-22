@@ -1,6 +1,6 @@
 use std::fs::{self, File};
 
-use anyhow::{Context, bail};
+use anyhow::{Context, anyhow, bail};
 use serde::{Deserialize, Serialize};
 
 use crate::{config, utils::os::permissions};
@@ -17,20 +17,26 @@ const CONFIG_FILE_NAME: &str = "nexus/config.toml";
 
 impl Config {
     pub fn load() -> anyhow::Result<Self> {
-        let path = match config::resolve_config_file_path(CONFIG_FILE_NAME) {
-            Some(path) => path,
-            None => bail!("Failed to resolve config path"),
-        };
+        let config_file_path = config::resolve_config_file_path(CONFIG_FILE_NAME)
+            .ok_or_else(|| anyhow!("Failed to resolve config path"))?;
 
-        if path.exists() {
-            let content = std::fs::read_to_string(&path)
-                .unwrap_or_else(|e| panic!("Failed to read config at {}: {}", path.display(), e));
-            Ok(toml::from_str(&content).expect("Failed to parse config"))
-        } else {
-            let config = Self::default();
-            config.save().expect("Failed to generate default config");
-            Ok(config)
+        if !config_file_path.exists() {
+            bail!("Config file could not be found.");
         }
+
+        let contents = fs::read_to_string(&config_file_path)
+            .with_context(|| format!("Failed to read config at {}", config_file_path.display()))?;
+
+        let mut config: Config = toml::from_str(&contents)
+            .with_context(|| format!("Failed to parse config at {}", config_file_path.display()))?;
+
+        let api_key_path = config::resolve_config_file_path(API_KEY_FILE_NAME)
+            .ok_or_else(|| anyhow!("Failed to resolve api key path"))?;
+        if let Ok(key) = fs::read_to_string(&api_key_path) {
+            config.api_key = Some(key.trim().to_string());
+        }
+
+        Ok(config)
     }
 
     pub fn save(&self) -> anyhow::Result<()> {

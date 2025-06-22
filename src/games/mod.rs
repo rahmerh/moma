@@ -2,12 +2,12 @@ use std::path::{Path, PathBuf};
 
 use crate::{
     config::{Config, GameConfig},
-    games::skyrim::SkyrimSe,
+    games::skyrimse::SkyrimSe,
     sources::Source,
 };
 
 pub mod context;
-pub mod skyrim;
+pub mod skyrimse;
 
 pub trait GameProfile {
     fn name(&self) -> &'static str;

@@ -7,7 +7,11 @@ use owo_colors::OwoColorize;
 use crate::{
     config::Config,
     games::context::GameContext,
-    utils::{fs::copy_dir, os::mount, os::permissions, print},
+    ui::print,
+    utils::{
+        fs::copy_dir,
+        os::{mount, permissions},
+    },
 };
 
 #[derive(Args)]

@@ -13,11 +13,8 @@ use std::{
 use crate::{
     config::{CACHE_DIR_NAME, Config, GameConfig, MODS_DIR_NAME},
     sources::Source,
-    ui::prompt,
-    utils::{
-        fs::{ExpandTilde, extract_archive},
-        print::print_inline_status,
-    },
+    ui::{print, prompt},
+    utils::fs::{ExpandTilde, extract_archive},
 };
 
 use super::GameProfile;
@@ -55,7 +52,7 @@ impl SkyrimSe {
 
 impl GameProfile for SkyrimSe {
     fn name(&self) -> &'static str {
-        "Skyrim"
+        "SkyrimSE"
     }
 
     fn default_game_path(&self, steam_dir: &Path) -> PathBuf {
@@ -100,7 +97,7 @@ impl GameProfile for SkyrimSe {
         fs::create_dir_all(&cache_dir)?;
         fs::create_dir_all(&mods_dir)?;
 
-        print_inline_status(
+        print::print_inline_status(
             format!("Downloading SKSE to \"{}\"", cache_dir.to_string_lossy()).as_ref(),
         )?;
 
@@ -113,11 +110,11 @@ impl GameProfile for SkyrimSe {
         let mut out = File::create(&skse_archive_path)?;
         copy(&mut response, &mut out)?;
 
-        print_inline_status("Extracting archive...")?;
+        print::print_inline_status("Extracting archive...")?;
 
         extract_archive(&skse_archive_path, &skse_output_dir, true)?;
 
-        print_inline_status("Done!")?;
+        print::print_inline_status("Done!")?;
 
         println!(
             "{}",

@@ -119,7 +119,3 @@ I looked around. There are plenty of Linux CLI mod managers, but none of them sc
 Then I discovered overlayfs, which turned out to be perfect for mod management. It lets you layer mods cleanly, isolate writes into an upper directory, and when paired with a private namespace makes the whole thing seamless and invisible to the user. No performance hit, no mess.
 
 Finally, I thought: why not write it in a language I’ve never used? Might as well learn something from it, which is why I picked rust. Moma might not be the most feature-rich mod manager out there, or the best written one, but it’s one that felt right and that I genuinly want to use.
-
----
-
-Want to contribute? Found a bug? File an issue or open a PR. I’ll probably merge it.

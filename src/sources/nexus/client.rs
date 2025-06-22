@@ -6,7 +6,7 @@ use reqwest::{
 };
 use serde::Deserialize;
 
-use crate::sources::nexus::config::Config;
+use crate::sources::nexus::{Nexus, config::Config};
 
 const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 
@@ -21,6 +21,17 @@ pub struct ValidateResponse {
     pub key: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct FilesResponse {
+    files: Vec<File>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct File {
+    pub file_id: u64,
+    pub category_name: Option<String>,
+}
+
 // Documentation: https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
 impl NexusClient {
     pub fn new(config: &Config) -> anyhow::Result<Self> {
@@ -33,7 +44,8 @@ impl NexusClient {
 
     fn with_key(api_key: &str) -> anyhow::Result<Self> {
         let mut headers = HeaderMap::new();
-        headers.insert("apikey", HeaderValue::from_str(api_key)?);
+
+        headers.insert("apikey", HeaderValue::from_str(api_key.trim())?);
         headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
 
         let client = Client::builder()
@@ -64,5 +76,23 @@ impl NexusClient {
             .json()
             .context("Failed to deserialize validate response")?;
         Ok(response)
+    }
+
+    pub fn get_files(&self, game: &str, mod_id: &str) -> anyhow::Result<Vec<File>> {
+        let nexus_domain = Nexus::resolve_nexus_domain(game).ok_or_else(|| {
+            anyhow::anyhow!("Game '{}' could not be mapped to a nexus domain.", game)
+        })?;
+
+        let url_str = format!(
+            "{}/games/{}/mods/{}/files.json",
+            NEXUS_BASE_URL, nexus_domain, mod_id
+        );
+
+        let url = Url::parse(&url_str)?;
+        let response = self.client.get(url).send().context("Request failed")?;
+
+        let files: FilesResponse = response.json()?;
+
+        Ok(files.files)
     }
 }
