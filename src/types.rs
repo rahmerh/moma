@@ -3,6 +3,6 @@ pub struct ModInfo {
 }
 
 pub struct ModFileInfo {
-    pub name: String,
+    pub uid: u64,
     pub file_name: String,
 }

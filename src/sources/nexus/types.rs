@@ -29,7 +29,7 @@ pub struct DownloadInfoResponse {
 
 #[derive(Deserialize)]
 pub struct ModFileInfoResponse {
-    pub name: String,
+    pub uid: u64,
     pub file_name: String,
 }
 
@@ -41,7 +41,7 @@ pub struct ModInfoResponse {
 impl From<ModFileInfoResponse> for ModFileInfo {
     fn from(value: ModFileInfoResponse) -> Self {
         ModFileInfo {
-            name: value.name,
+            uid: value.uid,
             file_name: value.file_name,
         }
     }

@@ -12,11 +12,11 @@ use crate::{
 };
 
 const OVERLAY: &str = ".overlay";
-const CACHE: &str = ".cache";
 const MERGED: &str = "merged";
 const WORK: &str = "work";
 const ACTIVE: &str = "active";
 const MODS: &str = "mods";
+const STAGING: &str = "staging";
 const SINK: &str = "sink";
 const PROTON: &str = "proton";
 
@@ -50,12 +50,12 @@ impl Workspace {
         self.game.path.clone()
     }
 
-    pub fn sink_dir(&self) -> PathBuf {
-        self.root.join(SINK)
+    pub fn staging_dir(&self) -> PathBuf {
+        self.root.join(STAGING)
     }
 
-    pub fn cache_dir(&self) -> PathBuf {
-        self.root.join(CACHE)
+    pub fn sink_dir(&self) -> PathBuf {
+        self.root.join(SINK)
     }
 
     pub fn proton_work_dir(&self) -> PathBuf {
@@ -76,6 +76,7 @@ impl Workspace {
     pub fn prepare_file_system(&self) -> anyhow::Result<()> {
         fs::create_dir_all(self.sink_dir())?;
         fs::create_dir_all(self.proton_work_dir())?;
+        fs::create_dir_all(self.staging_dir())?;
 
         permissions::chown_dir(&self.proton_work_dir(), false)
             .with_context(|| "Could not set proton working dir permissions.")?;

@@ -1,3 +1,4 @@
+pub mod notify;
 pub mod print;
 pub mod progress;
 pub mod prompt;

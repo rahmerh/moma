@@ -2,6 +2,7 @@ mod cli;
 mod commands;
 mod config;
 mod games;
+mod mods;
 mod sources;
 mod types;
 mod ui;
