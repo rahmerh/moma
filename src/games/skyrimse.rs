@@ -7,7 +7,7 @@ use reqwest::get;
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::{Write, copy},
+    io::Write,
     path::{Path, PathBuf},
 };
 

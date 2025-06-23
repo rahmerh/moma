@@ -3,7 +3,8 @@ use owo_colors::OwoColorize;
 
 use crate::{
     commands::{
-        connect::Connect, context::Context, init::Init, launch::Launch, supported::Supported,
+        connect::Connect, context::Context, init::Init, launch::Launch, mods::nxm::NxmHandler,
+        supported::Supported,
     },
     config::Config,
     utils::{state, string::StringUtils},
@@ -34,6 +35,11 @@ pub enum Command {
     Connect(Connect),
     #[command(name = "mod", about = "Game mod context")]
     Context(Context),
+    #[command(
+        name = "nxm",
+        about = "Handles the nxm link. To be used in combination with the nxm handler set up by the connect command."
+    )]
+    NxmHandler(NxmHandler),
 }
 
 impl Cli {
@@ -48,6 +54,7 @@ impl Cli {
             Some(Command::Supported(cmd)) => cmd.run(),
             Some(Command::Connect(cmd)) => cmd.run().await,
             Some(Command::Context(cmd)) => cmd.run(),
+            Some(Command::NxmHandler(cmd)) => cmd.run().await,
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;

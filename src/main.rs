@@ -3,7 +3,6 @@ mod commands;
 mod config;
 mod games;
 mod sources;
-mod types;
 mod ui;
 mod utils;
 

@@ -5,8 +5,6 @@ use reqwest::{
 };
 use serde::Deserialize;
 
-use crate::sources::nexus::{Nexus, config::Config};
-
 const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 
 pub struct NexusClient {
@@ -20,28 +18,15 @@ pub struct ValidateResponse {
     pub key: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct FilesResponse {
-    files: Vec<File>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct File {
-    pub file_id: u64,
-    pub name: String,
-    pub category_name: Option<String>,
-    pub size_kb: Option<u64>,
-}
-
 // Documentation: https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
 impl NexusClient {
-    pub fn new(config: &Config) -> anyhow::Result<Self> {
-        let api_key = config
-            .api_key
-            .as_ref()
-            .with_context(|| "Nexus API key not set")?;
-        Self::with_key(api_key)
-    }
+    // pub fn new(config: &Config) -> anyhow::Result<Self> {
+    //     let api_key = config
+    //         .api_key
+    //         .as_ref()
+    //         .with_context(|| "Nexus API key not set")?;
+    //     Self::with_key(api_key)
+    // }
 
     fn with_key(api_key: &str) -> anyhow::Result<Self> {
         let mut headers = HeaderMap::new();
@@ -82,25 +67,5 @@ impl NexusClient {
             .await
             .context("Failed to deserialize validate response")?;
         Ok(response)
-    }
-
-    pub async fn get_files(&self, game: &str, mod_id: &str) -> anyhow::Result<Vec<File>> {
-        let nexus_domain = Nexus::resolve_nexus_domain(game).ok_or_else(|| {
-            anyhow::anyhow!("Game '{}' could not be mapped to a nexus domain.", game)
-        })?;
-
-        let url = Url::parse(NEXUS_BASE_URL)?
-            .join("games/")?
-            .join(&format!("{}/mods/{}/files.json", nexus_domain, mod_id))?;
-        let response = self
-            .client
-            .get(url)
-            .send()
-            .await
-            .context("Request failed")?;
-
-        let files: FilesResponse = response.json().await?;
-
-        Ok(files.files)
     }
 }

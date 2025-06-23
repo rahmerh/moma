@@ -1,17 +1,15 @@
-use std::{process::Command, time::Duration};
+use std::{fs, path::PathBuf, process::Command};
 
 use anyhow::Context;
 use owo_colors::OwoColorize;
 
 use crate::{
     sources::nexus::{client::NexusClient, config::Config},
-    types::{ModFile, ModFiles},
     ui::prompt,
 };
 
 mod client;
 pub mod config;
-mod mapper;
 
 pub struct Nexus;
 
@@ -46,22 +44,27 @@ impl Nexus {
             .arg("https://www.nexusmods.com/users/myaccount?tab=api")
             .spawn()?;
 
-        let api_key = prompt::password_with_retry("Enter your Nexus API key", |input| {
-            let rt = tokio::runtime::Handle::current();
-            rt.block_on(async {
-                NexusClient::validate_key(input)
-                    .await
-                    .map(|_| input.to_string())
-                    .map_err(|_| anyhow::anyhow!("Invalid API key"))
-            })
-        })?;
+        let api_key: String;
+        loop {
+            let input = prompt::password("Enter your Nexus API key")?;
+            match NexusClient::validate_key(&input).await {
+                Ok(res) => {
+                    api_key = res.key;
+                    break;
+                }
+                Err(_) => {
+                    println!("{}", "Invalid API key, try again.".red().bold());
+                    continue;
+                }
+            };
+        }
 
         let nexus_user = NexusClient::validate_key(&api_key)
             .await
             .with_context(|| "Could not validate the nexus API key")?;
 
         Config::save_api_key(&nexus_user.key)?;
-        let mut config = Config::load()?;
+        let mut config = Config::default();
         config.username = Some(nexus_user.name);
         config.is_premium = nexus_user.is_premium;
         config.save()?;
@@ -73,42 +76,30 @@ impl Nexus {
                 .bold()
         );
 
-        Ok(())
-    }
+        if prompt::confirm("Do you want to set up the nxm link handler?")? {
+            println!(
+                "{}\n{}",
+                "Copying moma-nxm.desktop to ~/.local/share/applications".italic(),
+                "Executing 'xdg-mime default moma-nxm.desktop x-scheme-handler/nxm'".italic()
+            );
 
-    pub async fn get_mod_files(game: &str, mod_id: &str) -> anyhow::Result<ModFiles> {
-        let config = Config::load()?;
-        let client = NexusClient::new(&config)?;
+            let desktop_file = include_str!("../../assets/moma-nxm.desktop");
+            let local_share =
+                dirs_next::data_dir().unwrap_or_else(|| PathBuf::from("~/.local/share"));
+            let desktop_path = local_share.join("applications/moma-nxm-handler.desktop");
 
-        let files = client.get_files(game, mod_id).await?;
-        let mapped_files = mapper::map_mod_files(files);
+            fs::write(&desktop_path, desktop_file).context("Failed to write .desktop file")?;
 
-        let mut result = ModFiles::default();
-
-        for file in mapped_files {
-            let category = file.category.as_deref().unwrap_or("").to_lowercase();
-
-            match category.as_str() {
-                "main" => result.main.push(file),
-                "optional" => result.optional.push(file),
-                "miscellaneous" => result.misc.push(file),
-                "old" => result.old_versions.push(file),
-                _ => result.uncategorized.push(file),
-            }
+            Command::new("xdg-mime")
+                .args([
+                    "default",
+                    "moma-nxm-handler.desktop",
+                    "x-scheme-handler/nxm",
+                ])
+                .status()
+                .context("Failed to run xdg-mime")?;
         }
 
-        Ok(result)
-    }
-
-    pub async fn download_file(file: &ModFile) -> anyhow::Result<()> {
-        tokio::time::sleep(Duration::from_secs(2)).await;
         Ok(())
-    }
-
-    pub fn resolve_nexus_domain(game_key: &str) -> Option<&'static str> {
-        match game_key.to_lowercase().as_str() {
-            "skyrimse" => Some("skyrimspecialedition"),
-            _ => None,
-        }
     }
 }

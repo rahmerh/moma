@@ -41,25 +41,15 @@ pub fn confirm(prompt_text: &str) -> anyhow::Result<bool> {
     Ok(confirmation)
 }
 
-pub fn password_with_retry<F, T>(prompt: &str, validate: F) -> anyhow::Result<T>
-where
-    F: Fn(&str) -> anyhow::Result<T>,
-{
+pub fn password(prompt: &str) -> anyhow::Result<String> {
     let theme = crate::ui::theme::default_theme();
 
-    loop {
-        let input = Password::with_theme(&theme)
-            .with_prompt(prompt)
-            .interact()
-            .context("Failed to read password input")?;
+    let input = Password::with_theme(&theme)
+        .with_prompt(prompt)
+        .interact()
+        .context("Failed to read password input")?;
 
-        match validate(&input) {
-            Ok(res) => return Ok(res),
-            Err(_) => {
-                eprintln!("{}{}", "Invalid input".red(), ", please try again.");
-            }
-        }
-    }
+    Ok(input)
 }
 
 pub fn select<T: Display + Clone>(prompt: &str, options: &[T]) -> anyhow::Result<T> {

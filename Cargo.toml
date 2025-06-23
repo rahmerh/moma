@@ -16,7 +16,7 @@ pelite = "0.10.0"
 serde = { version = "1.0.219", features = ["derive"] }
 shellexpand = "3.1.1"
 toml = "0.8.23"
-reqwest = { version = "0.11", features = ["blocking", "json"] }
+reqwest = { version = "0.11", features = ["json", "stream", "gzip"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 sevenz-rust2 = "0.14.1"
 crossterm = "0.29.0"
@@ -30,3 +30,5 @@ strum_macros = "0.27.1"
 futures = "0.3.31"
 indicatif = "0.17.11"
 async-trait = "0.1.88"
+futures-util = "0.3.31"
+tokio-util = "0.7.15"
