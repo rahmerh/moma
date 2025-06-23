@@ -123,8 +123,6 @@ NXM link handler (Nexus download URLs)
 ### Planned
 - (Unit) tests
 - Load order management
-- Declarative mod installation
-- Mod management commands (search, update, etc.)
 - FOMOD CLI wizard
 - Proper error handling (remove anyhow crate)
 - Logging for debug purposes
