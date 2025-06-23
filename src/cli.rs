@@ -45,7 +45,12 @@ pub enum Command {
 impl Cli {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         if let Some(game) = state::current_context()? {
-            println!("{}{}{}", "[".cyan(), game.capitalize().bold(), "]".cyan());
+            println!(
+                "{}{}{}",
+                "[".cyan(),
+                game.to_string().capitalize().bold(),
+                "]".cyan()
+            );
         }
 
         match &self.command {

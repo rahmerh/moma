@@ -3,53 +3,48 @@ use std::{fs, path::PathBuf};
 use anyhow::{Context, bail};
 use owo_colors::OwoColorize;
 
-use crate::config::Config;
+use crate::games::Game;
 
 const STATE_FILE: &str = "/tmp/moma_state";
 
-pub fn current_context() -> anyhow::Result<Option<String>> {
+pub fn current_context() -> anyhow::Result<Option<Game>> {
     let path = PathBuf::from(STATE_FILE);
-
     if !path.exists() {
         return Ok(None);
     }
 
-    let contents = fs::read_to_string(&path)
-        .map_err(|e| anyhow::anyhow!("Failed to read state file: {}", e))?;
-
+    let contents = fs::read_to_string(&path).context("Failed to read state file")?;
     let trimmed = contents.trim();
 
     if trimmed.is_empty() {
         Ok(None)
     } else {
-        Ok(Some(trimmed.to_string()))
+        match Game::from_id(trimmed) {
+            Some(game) => Ok(Some(game)),
+            None => bail!("Invalid game context in state file: '{}'", trimmed),
+        }
     }
 }
 
-pub fn clear_context() -> anyhow::Result<()> {
-    let file = PathBuf::from(STATE_FILE);
+pub fn set_context(game: Game) -> anyhow::Result<()> {
+    fs::write(STATE_FILE, game.id())?;
+    println!(
+        "{} {}",
+        "Game context set to".cyan().bold(),
+        game.to_string().bold()
+    );
+    Ok(())
+}
 
-    if file.exists() {
-        fs::remove_file(file).with_context(|| "Could not remove moma's state file.")?;
+pub fn clear_context() -> anyhow::Result<()> {
+    let path = PathBuf::from(STATE_FILE);
+
+    if path.exists() {
+        fs::remove_file(path).context("Could not remove state file")?;
         println!("{}", "Game context cleared.".cyan().bold());
     } else {
         println!("{}", "No game context was set.".yellow());
     }
-
-    return Ok(());
-}
-
-pub fn set_context(game: &str) -> anyhow::Result<()> {
-    let config = Config::load_or_default()?;
-
-    let game = game.trim().to_lowercase();
-
-    if !config.games.contains_key(&game) {
-        bail!("No game configuration present for {}", game.bold().cyan());
-    }
-
-    fs::write(STATE_FILE, &game)?;
-    println!("{} {}", "Game context set to".cyan().bold(), game.bold());
 
     Ok(())
 }

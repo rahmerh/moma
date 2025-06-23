@@ -8,7 +8,7 @@ use anyhow::Context;
 
 use crate::{
     config::{Config, GameConfig},
-    games::{GameProfile, get_game_profile_by_name},
+    games::Game,
     utils::os::permissions,
 };
 
@@ -20,18 +20,16 @@ const MODS: &str = "mods";
 const SINK: &str = "sink";
 const PROTON: &str = "proton";
 
-pub struct GameContext<'a> {
+/// Collection of helper methods to aid in launching a game
+pub struct LaunchContext<'a> {
     /// The user-defined configuration for this game (install path, Proton version, etc.)
     pub game: &'a GameConfig,
-
-    /// Static game metadata and behavior (main executable, mod launcher, supported paths)
-    pub profile: Box<dyn GameProfile>,
 
     /// The game's working directory under Moma's root (e.g. `~/.moma/skyrim`)
     pub root: PathBuf,
 }
 
-impl<'a> GameContext<'a> {
+impl<'a> LaunchContext<'a> {
     pub fn active_dir(&self) -> PathBuf {
         self.root.join(ACTIVE)
     }
@@ -60,18 +58,14 @@ impl<'a> GameContext<'a> {
         self.game.proton_dir.join("proton")
     }
 
-    pub fn new(config: &'a Config, game_name: &str) -> anyhow::Result<Self> {
+    pub fn new(config: &'a Config, game: &Game) -> anyhow::Result<Self> {
         let game = config
             .games
-            .get(game_name)
-            .ok_or_else(|| anyhow::anyhow!("No config found for game '{}'", game_name))?;
-
-        let profile = get_game_profile_by_name(&game.name)
-            .ok_or_else(|| anyhow::anyhow!("No game profile found for '{}'", game.name))?;
+            .get(game.id())
+            .ok_or_else(|| anyhow::anyhow!("No config found for game '{}'", game.to_string()))?;
 
         Ok(Self {
             game,
-            profile,
             root: config.work_dir.join(&game.name),
         })
     }

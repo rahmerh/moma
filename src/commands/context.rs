@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::utils::state;
+use crate::{games::Game, utils::state};
 
 #[derive(Args)]
 pub struct Context {
@@ -11,12 +11,13 @@ impl Context {
     pub fn run(&self) -> anyhow::Result<()> {
         if self.game.to_lowercase() == "clear" {
             state::clear_context()?;
-
             return Ok(());
         }
 
-        state::set_context(self.game.as_str())?;
+        let game = Game::from_id(&self.game)
+            .ok_or_else(|| anyhow::anyhow!("Unknown game '{}'", self.game))?;
 
+        state::set_context(game)?;
         Ok(())
     }
 }

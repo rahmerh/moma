@@ -1,14 +1,14 @@
 use anyhow::Context;
 use clap::Args;
 use owo_colors::OwoColorize;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use strum::IntoEnumIterator;
 
 use crate::{
     config::{Config, GameConfig},
-    games::{self, GameProfile},
+    games::Game,
     sources::Source,
     ui::{prompt, reorder},
-    utils::fs::ExpandTilde,
 };
 
 #[derive(Args)]
@@ -18,32 +18,34 @@ impl Init {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         println!("\n{}\n", "Moma initial setup".bold().underline().cyan());
 
-        let steam_dir = config
-            .get_steam_dir()
-            .with_context(|| "Could not determine steam dir")?;
-        let game = determine_game(games::get_supported_games())?;
+        if config.steam_dir.is_none() {
+            let steam_dir = config.resolve_steam_dir()?;
 
-        let game_name_lower = game.name().to_lowercase();
-        let game_ref = &*game;
+            config.steam_dir = Some(steam_dir);
+            config.save()?;
+        }
 
-        if config.games.contains_key(&game_name_lower) {
+        let all_games: Vec<Game> = Game::iter().collect();
+        let game = prompt::select("Select game to initialize", &all_games)?;
+
+        if config.games.contains_key(game.id()) {
             if !prompt::confirm(&format!(
                 "{} already setup, do you want to overwrite it?",
-                &game_name_lower
+                &game.to_string()
             ))? {
                 println!("{}", "Exiting setup.".yellow());
                 return Ok(());
             }
         }
 
-        let game_install_dir = determine_game_installation_dir(game_ref, &steam_dir)?;
-        let proton_dir = determine_proton(&steam_dir, game_ref)?;
-        let sources = determine_desired_sources(game_ref)
+        let game_install_dir = determine_game_installation_dir(&game, &config)?;
+        let proton_dir = determine_proton(&game, &config)?;
+        let sources = determine_desired_sources(&game)
             .with_context(|| "Could not determine mod sources, please try again.")?;
 
         println!();
         println!("{}", "Configuration Summary".bold().cyan());
-        println!("Game: \"{}\"", &game.name().bold());
+        println!("Game: \"{}\"", &game.to_string().bold());
         println!("Proton path: \"{}\"", &proton_dir.display().bold());
         println!("Path: \"{}\"", game_install_dir.display().bold());
         println!(
@@ -56,7 +58,7 @@ impl Init {
         );
         println!(
             "Moma's game working directory: \"{}\"",
-            config.work_dir.join(&game_name_lower).display()
+            game.work_dir(&config).display()
         );
         println!();
 
@@ -67,13 +69,13 @@ impl Init {
 
         let game_config = GameConfig {
             path: game_install_dir,
-            name: game_name_lower.clone(),
+            name: game.id().to_string(),
             proton_dir,
             env: None,
             sources: sources,
         };
 
-        config.games.insert(game_name_lower.clone(), game_config);
+        config.games.insert(game.id().to_string(), game_config);
         config.save()?;
 
         println!(
@@ -83,50 +85,28 @@ impl Init {
                 .underline()
                 .cyan()
         );
-
-        let _ = config
-            .games
-            .get(&game_name_lower)
-            .expect("Could not store game configuration.");
-        game.setup_modding(config).await?;
+        game.setup(config).await?;
 
         Ok(())
     }
 }
 
-fn determine_game(games: Vec<Box<dyn GameProfile>>) -> anyhow::Result<Box<dyn GameProfile>> {
-    let labeled_games: Vec<(String, Box<dyn GameProfile>)> = games
-        .into_iter()
-        .map(|g| (g.name().to_string(), g))
-        .collect();
-
-    let labels: Vec<String> = labeled_games.iter().map(|(name, _)| name.clone()).collect();
-
-    let selected_name = prompt::select("Available games", &labels)?;
-
-    let (_, game) = labeled_games
-        .into_iter()
-        .find(|(name, _)| name == &selected_name)
-        .ok_or_else(|| anyhow::anyhow!("Game not found"))?;
-
-    Ok(game)
-}
-
-fn determine_game_installation_dir(
-    game: &dyn GameProfile,
-    steam_dir: &Path,
-) -> anyhow::Result<PathBuf> {
-    let default_game_path = game.default_game_path(steam_dir).expand();
+fn determine_game_installation_dir(game: &Game, config: &Config) -> anyhow::Result<PathBuf> {
+    let default_game_path = game.default_game_path(config)?;
 
     let path = prompt::path(
-        &format!("Enter installation path for {}", game.name().cyan()),
+        &format!("Enter installation path for {}", game.to_string().cyan()),
         Some(&default_game_path.display().to_string()),
     )?;
 
     Ok(path)
 }
 
-fn determine_proton(steam_dir: &Path, game: &dyn GameProfile) -> anyhow::Result<PathBuf> {
+fn determine_proton(game: &Game, config: &Config) -> anyhow::Result<PathBuf> {
+    let steam_dir = config
+        .steam_dir
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("Could not read your Steam dir from config."))?;
     let common_dir = steam_dir.join("steamapps/common");
 
     let entries = std::fs::read_dir(&common_dir)?
@@ -138,17 +118,15 @@ fn determine_proton(steam_dir: &Path, game: &dyn GameProfile) -> anyhow::Result<
         .map(|e| e.path())
         .collect::<Vec<_>>();
 
-    let selected_proton = prompt::select_path(
-        &format!("Choose Proton version for {}", game.name()),
-        entries,
-    )
-    .with_context(|| format!("No proton could be found in {}", common_dir.display()))?;
+    let selected_proton =
+        prompt::select_path(&format!("Choose Proton version for {}", game), entries)
+            .with_context(|| format!("No proton could be found in {}", common_dir.display()))?;
 
     Ok(selected_proton)
 }
 
-fn determine_desired_sources(game: &dyn GameProfile) -> anyhow::Result<Vec<Source>> {
-    let supported = game.supported_sources();
+fn determine_desired_sources(game: &Game) -> anyhow::Result<Vec<Source>> {
+    let supported = game.default_mod_sources();
 
     if supported.len() == 1 {
         return Ok(supported);
@@ -157,7 +135,7 @@ fn determine_desired_sources(game: &dyn GameProfile) -> anyhow::Result<Vec<Sourc
     let mut selected_platforms = prompt::select_multiple(
         &format!(
             "Which mod platforms do you want to use for {}?",
-            game.name()
+            game.to_string()
         ),
         &supported,
     )?;

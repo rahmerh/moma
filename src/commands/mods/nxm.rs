@@ -1,6 +1,6 @@
-use anyhow::{Context, bail};
+use std::process::Command;
+
 use clap::Args;
-use reqwest::Url;
 
 use crate::sources::nexus::Nexus;
 
@@ -14,9 +14,15 @@ impl NxmHandler {
     pub async fn run(&self) -> anyhow::Result<()> {
         let parsed = Nexus::parse_nxm_url(&self.url)?;
 
+        let domain = &parsed.game.clone();
+        let game_name = Nexus::map_from_nexus_domain(domain);
         let download_link = Nexus::get_download_link(parsed).await?;
 
-        println!("{}", download_link);
+        Nexus::download_file(&download_link, &game_name).await?;
+
+        Command::new("notify-send")
+            .arg(download_link.to_string())
+            .spawn()?;
 
         // get_download_link(&parsed.game, &parsed.mod_id, &parsed.file_id);
         //

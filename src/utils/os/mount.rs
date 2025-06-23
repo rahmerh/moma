@@ -3,9 +3,9 @@ use std::{io, process::Command};
 use anyhow::Context;
 use libc::CLONE_NEWNS;
 
-use crate::games::context::GameContext;
+use crate::games::launchcontext::LaunchContext;
 
-pub fn mount_overlay_for(context: &GameContext) -> anyhow::Result<()> {
+pub fn mount_overlay_for(context: &LaunchContext) -> anyhow::Result<()> {
     Command::new("mount")
         .args([
             "-t",

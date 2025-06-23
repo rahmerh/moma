@@ -1,5 +1,3 @@
-use std::ops::Index;
-
 use anyhow::{Context, bail};
 use reqwest::{
     Client, Url,
@@ -117,5 +115,9 @@ impl NexusClient {
         } else {
             anyhow::bail!("No download links returned from Nexus");
         }
+    }
+
+    pub async fn download_file(&self, url: &Url, game: &str) -> anyhow::Result<()> {
+        Ok(())
     }
 }

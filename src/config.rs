@@ -90,23 +90,13 @@ impl Config {
         }
     }
 
-    pub fn get_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
-        let steam_dir = match &self.steam_dir {
-            Some(dir) => dir.clone(),
-            None => self.resolve_and_store_steam_dir()?,
-        };
+    pub fn resolve_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
+        let dir = self.determine_steam_dir()?;
 
-        Ok(steam_dir)
-    }
-
-    fn resolve_and_store_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
-        let dir = Self::determine_steam_dir(self)?;
-        self.steam_dir = Some(dir.clone());
-        self.save()?;
         Ok(dir)
     }
 
-    fn determine_steam_dir(&mut self) -> anyhow::Result<PathBuf> {
+    fn determine_steam_dir(&self) -> anyhow::Result<PathBuf> {
         if let Some(ref dir) = self.steam_dir {
             return Ok(dir.expand());
         }
@@ -127,8 +117,7 @@ impl Config {
         loop {
             let path = prompt::path("Enter your Steam installation directory", None)?;
             if is_valid_steam_dir(&path) {
-                self.steam_dir = Some(path.clone());
-                return Ok(path);
+                return Ok(path.clone());
             } else {
                 println!("{}", "Not a valid Steam directory, please try again.".red());
             }

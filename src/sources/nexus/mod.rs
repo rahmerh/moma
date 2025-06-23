@@ -138,6 +138,15 @@ impl Nexus {
         Ok(Url::parse(&response.uri)?)
     }
 
+    pub async fn download_file(url: &Url, game: &str) -> anyhow::Result<()> {
+        let config = Config::load()?;
+        let client = NexusClient::new(&config)?;
+
+        client.download_file(url, game).await?;
+
+        Ok(())
+    }
+
     pub fn parse_nxm_url(link: &str) -> anyhow::Result<NxmLink> {
         let url = Url::parse(link).context("Failed to parse NXM URL")?;
 
@@ -177,5 +186,12 @@ impl Nexus {
             key,
             expires,
         })
+    }
+
+    pub fn map_from_nexus_domain(game: &str) -> &str {
+        match game.to_lowercase().as_str() {
+            "" => "",
+            _ => "",
+        }
     }
 }

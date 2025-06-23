@@ -1,34 +1,20 @@
-use std::{
-    fs::{self, File},
-    io::Write,
-};
-
 use owo_colors::OwoColorize;
 
 use crate::{
     config::{CACHE_DIR_NAME, Config, MODS_DIR_NAME},
-    games::Game,
-    sources::Source,
-    ui::{print, prompt},
-    utils::{self, fs::ExpandTilde},
+    ui::prompt,
 };
 use reqwest::get;
 
-pub fn supported_sources() -> Vec<Source> {
-    vec![Source::Nexus]
-}
+impl crate::games::Game {}
 
-pub fn game_mod_executable() -> &'static str {
-    "skse64_loader.exe"
-}
-
-pub async fn setup(config: &Config) -> anyhow::Result<()> {
+pub async fn setup_modding(config: &Config) -> anyhow::Result<()> {
     if !prompt::confirm("Do you want to setup SKSE?")? {
         println!("{}", "\nSkipping SKSE setup.".yellow());
         return Ok(());
     }
 
-    let game_work_dir = config.work_dir.join(Game::SkyrimSE.id()).expand();
+    let game_work_dir = self.work_dir(config);
 
     let cache_dir = game_work_dir.join(CACHE_DIR_NAME);
     let mods_dir = game_work_dir.join(MODS_DIR_NAME);
@@ -62,7 +48,7 @@ pub async fn setup(config: &Config) -> anyhow::Result<()> {
 
     print::print_inline_status("Extracting archive...")?;
 
-    utils::fs::extract_archive(&skse_archive_path, &skse_output_dir, true)?;
+    extract_archive(&skse_archive_path, &skse_output_dir, true)?;
 
     print::print_inline_status("Done!")?;
 
@@ -76,3 +62,26 @@ pub async fn setup(config: &Config) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+// #[async_trait]
+// impl GameProfile for SkyrimSe {
+//     fn name(&self) -> &'static str {
+//         "SkyrimSE"
+//     }
+//
+//     fn default_game_path(&self, steam_dir: &Path) -> PathBuf {
+//         steam_dir
+//             .join("steamapps")
+//             .join("common")
+//             .join("Skyrim Special Edition")
+//     }
+//
+//     fn game_mod_executable(&self) -> &'static str {
+//         "skse64_loader.exe"
+//     }
+//
+//
+//     fn supported_sources(&self) -> Vec<Source> {
+//         vec![Source::Nexus]
+//     }
+// }

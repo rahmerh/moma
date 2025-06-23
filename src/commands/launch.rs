@@ -6,7 +6,7 @@ use owo_colors::OwoColorize;
 
 use crate::{
     config::Config,
-    games::context::GameContext,
+    games::{Game, launchcontext::LaunchContext},
     ui::print,
     utils::{
         fs::copy_dir,
@@ -18,7 +18,7 @@ use crate::{
 #[derive(Args)]
 pub struct Launch {
     /// Name of the game to launch
-    pub game_name: Option<String>,
+    pub game: Option<Game>,
 
     /// Forces the launch of the game, ignoring sanity checks like an empty sink folder.
     #[arg(short, long, global = true)]
@@ -31,19 +31,19 @@ impl Launch {
             bail!("This command must be run as root. Try again with `sudo`.");
         }
 
-        let game = match self.game_name {
+        let steam_dir = config.steam_dir.as_ref().ok_or_else(|| {
+            anyhow::anyhow!(
+                "Missing Steam directory. Run `moma init` or configure it in your config file."
+            )
+        })?;
+
+        let game = match self.game {
             Some(ref game) => game.clone(),
-            None => {
-                let state = state::current_context()?
-                    .ok_or_else(|| anyhow::anyhow!(
-                        "No game provided and no context is set. Either provide a game to launch or set a context."
-                    ))?;
-                state
-            }
+            None => state::current_context()?
+                .ok_or_else(|| anyhow::anyhow!("No game specified and no context is set."))?,
         };
 
-        let steam_dir = config.get_steam_dir()?;
-        let context = GameContext::new(config, &game)?;
+        let context = LaunchContext::new(config, &game)?;
 
         if !context.validate_sink_is_empty()? {
             if self.force {
@@ -78,6 +78,11 @@ impl Launch {
         for entry in fs::read_dir(context.mods_dir())? {
             let entry = entry?;
             if !entry.metadata()?.is_dir() {
+                println!(
+                    "{} Not a directory, skipping: {}",
+                    "Warning:".yellow(),
+                    entry.path().display()
+                );
                 continue;
             }
             copy_dir(&entry.path(), &context.overlay_merged_dir(), true, true)?;
@@ -104,11 +109,7 @@ impl Launch {
         proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", steam_dir);
         proton_cmd.env("STEAM_COMPAT_DATA_PATH", &context.proton_work_dir());
         proton_cmd.arg("run");
-        proton_cmd.arg(
-            &context
-                .active_dir()
-                .join(&context.profile.game_mod_executable()),
-        );
+        proton_cmd.arg(&context.active_dir().join(&game.game_mod_executable()));
         proton_cmd
             .spawn()
             .with_context(|| "Failed to start Proton process")?;
