@@ -5,16 +5,15 @@ use owo_colors::OwoColorize;
 use reqwest::Url;
 
 use crate::{
-    games::workspace::Workspace,
-    sources::nexus::{
-        client::{DownloadInfoRequest, NexusClient},
-        config::Config,
-    },
+    games::{Game, workspace::Workspace},
+    sources::nexus::{self, client::NexusClient, config::Config, types::DownloadInfoRequest},
+    types::ModInfo,
     ui::prompt,
 };
 
 mod client;
 pub mod config;
+mod types;
 
 pub struct Nexus;
 
@@ -128,6 +127,17 @@ impl Nexus {
         Ok(())
     }
 
+    pub async fn get_mod_info(game: &Game, mod_id: &str) -> anyhow::Result<ModInfo> {
+        let config = Config::load()?;
+        let client = NexusClient::new(&config)?;
+
+        let response = client.get_mod_info(game, mod_id).await?;
+
+        let info: ModInfo = response.into();
+
+        Ok(info)
+    }
+
     pub async fn get_download_link(nxmlink: NxmLink) -> anyhow::Result<Url> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
@@ -192,11 +202,19 @@ impl Nexus {
             expires,
         })
     }
+}
 
-    pub fn map_from_nexus_domain(game: &str) -> &str {
-        match game.to_lowercase().as_str() {
-            "" => "",
-            _ => "",
+pub fn from_nexus_domain(domain: &str) -> anyhow::Result<Game> {
+    match domain.to_lowercase().as_str() {
+        "skyrimspecialedition" => {
+            Game::from_id("skyrimse").ok_or_else(|| anyhow::anyhow!("Invalid internal game ID"))
         }
+        _ => bail!("Unsupported game domain: {}", domain),
+    }
+}
+
+pub fn to_nexus_domain(game: &Game) -> anyhow::Result<&str> {
+    match game {
+        Game::SkyrimSE => Ok("skyrimspecialedition"),
     }
 }

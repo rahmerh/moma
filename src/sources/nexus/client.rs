@@ -3,35 +3,20 @@ use reqwest::{
     Client, Url,
     header::{self, HeaderMap, HeaderValue},
 };
-use serde::Deserialize;
 
-use crate::sources::nexus::config::Config;
+use crate::{
+    games::Game,
+    sources::nexus::{
+        self,
+        config::Config,
+        types::{DownloadInfoRequest, DownloadInfoResponse, ModInfoResponse, ValidateResponse},
+    },
+};
 
 const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 
 pub struct NexusClient {
     client: Client,
-}
-
-#[derive(Deserialize)]
-pub struct ValidateResponse {
-    pub name: String,
-    pub is_premium: bool,
-    pub key: String,
-}
-
-pub struct DownloadInfoRequest {
-    pub game: String,
-    pub mod_id: String,
-    pub file_id: String,
-    pub key: String,
-    pub expires: String,
-}
-
-#[derive(Deserialize, Clone)]
-pub struct DownloadInfoResponse {
-    #[serde(rename = "URI")]
-    pub uri: String,
 }
 
 // Documentation: https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
@@ -65,7 +50,6 @@ impl NexusClient {
 
     pub async fn validate(&self) -> anyhow::Result<ValidateResponse> {
         let url = Url::parse(NEXUS_BASE_URL)?.join("users/validate.json")?;
-        log::debug!("{}", url);
 
         let res = self.client.get(url).send().await?;
 
@@ -92,7 +76,6 @@ impl NexusClient {
             .join("files/")?
             .join(&format!("{}/", request.file_id))?
             .join("download_link.json")?;
-        log::debug!("{}", url);
 
         let res = self
             .client
@@ -102,19 +85,28 @@ impl NexusClient {
             .await?;
 
         let text = res.text().await?;
-        log::debug!("Raw response body: {}", text);
 
-        let response: Vec<DownloadInfoResponse> = serde_json::from_str(&text).map_err(|e| {
-            log::error!("Failed to deserialize Nexus response: {}", e);
-            log::debug!("Response body that failed to parse: {}", text);
-            e
-        })?;
+        let response: Vec<DownloadInfoResponse> = serde_json::from_str(&text).map_err(|e| e)?;
 
         if let Some(first) = response.first() {
             Ok(first.clone())
         } else {
             anyhow::bail!("No download links returned from Nexus");
         }
+    }
+
+    pub async fn get_mod_info(&self, game: &Game, mod_id: &str) -> anyhow::Result<ModInfoResponse> {
+        let url = Url::parse(NEXUS_BASE_URL)?
+            .join("games/")?
+            .join(&format!("{}/", nexus::to_nexus_domain(game)?))?
+            .join("mods/")?
+            .join(&format!("{}.json", mod_id))?;
+
+        let res = self.client.get(url).send().await?;
+
+        let mod_info: ModInfoResponse = res.json().await?;
+
+        Ok(mod_info)
     }
 
     pub async fn download_file(

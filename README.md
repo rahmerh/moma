@@ -113,9 +113,9 @@ See `docs/config.md` for all options.
 ## Roadmap
 
 ### Done
-- **0.1.0** Initialize moma folders with 'moma init'
-- **0.2.0** Mount folders and launch game with 'sudo moma launch <game>'
-- **0.3.0** Installation guide (Makefile + instructions)
+- **0.1.0** - Initialize moma folders with 'moma init'
+- **0.2.0** - Mount folders and launch game with 'sudo moma launch <game>'
+- **0.3.0** - Installation guide (Makefile + instructions)
 
 ### In progress
 NXM link handler (Nexus download URLs)

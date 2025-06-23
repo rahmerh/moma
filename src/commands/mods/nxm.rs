@@ -2,7 +2,11 @@ use std::process::Command;
 
 use clap::Args;
 
-use crate::{config::Config, games::workspace::Workspace, sources::nexus::Nexus};
+use crate::{
+    config::Config,
+    games::workspace::Workspace,
+    sources::nexus::{self, Nexus},
+};
 
 #[derive(Args)]
 pub struct NxmHandler {
@@ -13,19 +17,27 @@ impl NxmHandler {
     // nxm://skyrimspecialedition/mods/152490/files/638592?key=0Or2IM4l-FXSJjvRogxbMw&expires=1750810470&user_id=191018313
     pub async fn run(&self, config: &Config) -> anyhow::Result<()> {
         let parsed = Nexus::parse_nxm_url(&self.url)?;
+        Command::new("notify-send")
+            .arg("Starting mod download...")
+            .spawn()?;
 
-        let domain = &parsed.game.clone();
-        let game_name = Nexus::map_from_nexus_domain(domain);
+        let domain = &parsed.game;
+        let game = nexus::from_nexus_domain(domain)?;
+        let game_config = config.games.get(game.id()).ok_or_else(|| {
+            anyhow::anyhow!("No configuration found for game {}", game.to_string())
+        })?;
+
+        let mod_info = Nexus::get_mod_info(&game, parsed.mod_id.as_str()).await?;
         let download_link = Nexus::get_download_link(parsed).await?;
 
-        let game_config = config
-            .games
-            .get(game_name)
-            .ok_or_else(|| anyhow::anyhow!(""))?;
-        let workspace = Workspace::new(config, game_config);
+        let workspace = Workspace::new(config, game_config)?;
 
         Command::new("notify-send")
-            .arg(download_link.to_string())
+            .arg(format!(
+                "Downloaded {} to '{}'",
+                mod_info.name,
+                workspace.mods_dir().join(&mod_info.name).display()
+            ))
             .spawn()?;
 
         // get_download_link(&parsed.game, &parsed.mod_id, &parsed.file_id);
