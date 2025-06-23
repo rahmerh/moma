@@ -84,11 +84,11 @@ impl Init {
                 .cyan()
         );
 
-        let saved_config = config
+        let _ = config
             .games
             .get(&game_name_lower)
             .expect("Could not store game configuration.");
-        game.setup_modding(config, saved_config).await?;
+        game.setup_modding(config).await?;
 
         Ok(())
     }

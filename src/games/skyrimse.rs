@@ -1,18 +1,14 @@
-use anyhow::Context;
 use async_trait::async_trait;
-use once_cell::sync::Lazy;
 use owo_colors::OwoColorize;
-use pelite::{FileMap, PeFile, resources::version_info::VersionInfo};
 use reqwest::get;
 use std::{
-    collections::HashMap,
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
 };
 
 use crate::{
-    config::{CACHE_DIR_NAME, Config, GameConfig, MODS_DIR_NAME},
+    config::{CACHE_DIR_NAME, Config, MODS_DIR_NAME},
     sources::Source,
     ui::{print, prompt},
     utils::fs::{ExpandTilde, extract_archive},
@@ -21,35 +17,6 @@ use crate::{
 use super::GameProfile;
 
 pub struct SkyrimSe;
-
-static SKSE_DOWNLOADS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
-    HashMap::from([
-        ("1.5", "https://skse.silverlock.org/beta/skse64_2_00_20.7z"),
-        ("1.6", "https://skse.silverlock.org/beta/skse64_2_02_06.7z"),
-    ])
-});
-
-impl SkyrimSe {
-    fn determine_game_version(&self, game_path: &Path) -> anyhow::Result<String> {
-        let expanded = shellexpand::tilde(&game_path.to_string_lossy()).to_string();
-
-        let map = FileMap::open(&format!("{}/{}", expanded, self.game_executable()))
-            .with_context(|| format!("Failed to memory-map {:?}", expanded))?;
-        let pe = PeFile::from_bytes(&map).context("Not a valid PE32+ executable")?;
-        let resources = pe.resources().context("No resource section found")?;
-        let ver_info: VersionInfo = resources
-            .version_info()
-            .context("No VERSIONINFO resource in executable")?;
-
-        let game_version = ver_info
-            .fixed()
-            .context("Missing fixed file version info")?
-            .dwFileVersion
-            .to_string();
-
-        Ok(game_version)
-    }
-}
 
 #[async_trait]
 impl GameProfile for SkyrimSe {
@@ -64,15 +31,11 @@ impl GameProfile for SkyrimSe {
             .join("Skyrim Special Edition")
     }
 
-    fn game_executable(&self) -> &'static str {
-        "SkyrimSE.exe"
-    }
-
     fn game_mod_executable(&self) -> &'static str {
         "skse64_loader.exe"
     }
 
-    async fn setup_modding(&self, config: &Config, game_config: &GameConfig) -> anyhow::Result<()> {
+    async fn setup_modding(&self, config: &Config) -> anyhow::Result<()> {
         if !prompt::confirm("Do you want to setup SKSE?")? {
             println!("{}", "\nSkipping SKSE setup.".yellow());
             return Ok(());
@@ -103,12 +66,10 @@ impl GameProfile for SkyrimSe {
             format!("Downloading SKSE to \"{}\"", cache_dir.to_string_lossy()).as_ref(),
         )?;
 
-        let game_version = self.determine_game_version(&game_config.path)?;
-        let url = SKSE_DOWNLOADS
-            .get(&game_version[..3])
-            .with_context(|| format!("Unsupported game version: {}", game_version))?;
-
-        let bytes = get(url.to_string()).await?.bytes().await?;
+        let bytes = get("https://skse.silverlock.org/beta/skse64_2_02_06.7z")
+            .await?
+            .bytes()
+            .await?;
         let mut out = File::create(&skse_archive_path)?;
         out.write_all(&bytes)?;
 
