@@ -117,7 +117,14 @@ impl NexusClient {
         }
     }
 
-    pub async fn download_file(&self, url: &Url, game: &str) -> anyhow::Result<()> {
+    pub async fn download_file(
+        &self,
+        url: &Url,
+        game: &str,
+        mode_name: &str,
+    ) -> anyhow::Result<()> {
+        // self.client.get(url).send().await?;
+
         Ok(())
     }
 }

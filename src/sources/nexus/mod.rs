@@ -5,6 +5,7 @@ use owo_colors::OwoColorize;
 use reqwest::Url;
 
 use crate::{
+    games::workspace::Workspace,
     sources::nexus::{
         client::{DownloadInfoRequest, NexusClient},
         config::Config,
@@ -138,11 +139,15 @@ impl Nexus {
         Ok(Url::parse(&response.uri)?)
     }
 
-    pub async fn download_file(url: &Url, game: &str) -> anyhow::Result<()> {
+    pub async fn download_file(
+        url: &Url,
+        mod_name: &str,
+        workspace: &Workspace,
+    ) -> anyhow::Result<()> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
 
-        client.download_file(url, game).await?;
+        // client.download_file(url, game, mod_name).await?;
 
         Ok(())
     }

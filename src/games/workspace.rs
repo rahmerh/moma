@@ -20,16 +20,16 @@ const MODS: &str = "mods";
 const SINK: &str = "sink";
 const PROTON: &str = "proton";
 
-/// Collection of helper methods to aid in launching a game
-pub struct LaunchContext<'a> {
+/// Represents the game-specific working directory structure
+pub struct Workspace {
     /// The user-defined configuration for this game (install path, Proton version, etc.)
-    pub game: &'a GameConfig,
+    game: GameConfig,
 
     /// The game's working directory under Moma's root (e.g. `~/.moma/skyrim`)
-    pub root: PathBuf,
+    root: PathBuf,
 }
 
-impl<'a> LaunchContext<'a> {
+impl Workspace {
     pub fn active_dir(&self) -> PathBuf {
         self.root.join(ACTIVE)
     }
@@ -46,6 +46,10 @@ impl<'a> LaunchContext<'a> {
         self.root.join(MODS)
     }
 
+    pub fn game_dir(&self) -> PathBuf {
+        self.game.path.clone()
+    }
+
     pub fn sink_dir(&self) -> PathBuf {
         self.root.join(SINK)
     }
@@ -58,15 +62,10 @@ impl<'a> LaunchContext<'a> {
         self.game.proton_dir.join("proton")
     }
 
-    pub fn new(config: &'a Config, game: &Game) -> anyhow::Result<Self> {
-        let game = config
-            .games
-            .get(game.id())
-            .ok_or_else(|| anyhow::anyhow!("No config found for game '{}'", game.to_string()))?;
-
+    pub fn new(config: &Config, game_config: &GameConfig) -> anyhow::Result<Self> {
         Ok(Self {
-            game,
-            root: config.work_dir.join(&game.name),
+            game: game_config.clone(),
+            root: config.work_dir.join(&game_config.name),
         })
     }
 

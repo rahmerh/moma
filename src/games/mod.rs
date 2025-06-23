@@ -4,8 +4,8 @@ use strum_macros::EnumIter;
 
 use crate::{config::Config, sources::Source, utils::fs::ExpandTilde};
 
-pub mod launchcontext;
 pub mod skyrimse;
+pub mod workspace;
 
 #[derive(clap::ValueEnum, EnumIter, Clone)]
 pub enum Game {

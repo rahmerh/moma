@@ -2,7 +2,7 @@ use std::process::Command;
 
 use clap::Args;
 
-use crate::sources::nexus::Nexus;
+use crate::{config::Config, games::workspace::Workspace, sources::nexus::Nexus};
 
 #[derive(Args)]
 pub struct NxmHandler {
@@ -11,14 +11,18 @@ pub struct NxmHandler {
 
 impl NxmHandler {
     // nxm://skyrimspecialedition/mods/152490/files/638592?key=0Or2IM4l-FXSJjvRogxbMw&expires=1750810470&user_id=191018313
-    pub async fn run(&self) -> anyhow::Result<()> {
+    pub async fn run(&self, config: &Config) -> anyhow::Result<()> {
         let parsed = Nexus::parse_nxm_url(&self.url)?;
 
         let domain = &parsed.game.clone();
         let game_name = Nexus::map_from_nexus_domain(domain);
         let download_link = Nexus::get_download_link(parsed).await?;
 
-        Nexus::download_file(&download_link, &game_name).await?;
+        let game_config = config
+            .games
+            .get(game_name)
+            .ok_or_else(|| anyhow::anyhow!(""))?;
+        let workspace = Workspace::new(config, game_config);
 
         Command::new("notify-send")
             .arg(download_link.to_string())

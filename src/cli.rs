@@ -59,7 +59,7 @@ impl Cli {
             Some(Command::Supported(cmd)) => cmd.run(),
             Some(Command::Connect(cmd)) => cmd.run().await,
             Some(Command::Context(cmd)) => cmd.run(),
-            Some(Command::NxmHandler(cmd)) => cmd.run().await,
+            Some(Command::NxmHandler(cmd)) => cmd.run(config).await,
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;

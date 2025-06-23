@@ -3,9 +3,9 @@ use std::{io, process::Command};
 use anyhow::Context;
 use libc::CLONE_NEWNS;
 
-use crate::games::launchcontext::LaunchContext;
+use crate::games::workspace::Workspace;
 
-pub fn mount_overlay_for(context: &LaunchContext) -> anyhow::Result<()> {
+pub fn mount_overlay_for(context: &Workspace) -> anyhow::Result<()> {
     Command::new("mount")
         .args([
             "-t",
@@ -14,7 +14,7 @@ pub fn mount_overlay_for(context: &LaunchContext) -> anyhow::Result<()> {
             "-o",
             &format!(
                 "lowerdir={}:{},upperdir={},workdir={}",
-                context.game.path.display(),
+                context.game_dir().display(),
                 context.overlay_merged_dir().display(),
                 context.sink_dir().display(),
                 context.overlay_work_dir().display(),

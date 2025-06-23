@@ -6,7 +6,7 @@ use owo_colors::OwoColorize;
 
 use crate::{
     config::Config,
-    games::{Game, launchcontext::LaunchContext},
+    games::{Game, workspace::Workspace},
     ui::print,
     utils::{
         fs::copy_dir,
@@ -43,7 +43,15 @@ impl Launch {
                 .ok_or_else(|| anyhow::anyhow!("No game specified and no context is set."))?,
         };
 
-        let context = LaunchContext::new(config, &game)?;
+        let game_config = match config.games.get(game.id()) {
+            Some(config) => config,
+            None => bail!(
+                "No game configuration found for {}, did you run 'moma init'?",
+                game.to_string().bold()
+            ),
+        };
+
+        let context = Workspace::new(config, &game_config)?;
 
         if !context.validate_sink_is_empty()? {
             if self.force {
@@ -103,7 +111,7 @@ impl Launch {
         proton_cmd.current_dir(&context.active_dir());
 
         let mut merged_env = std::env::vars().collect::<HashMap<_, _>>();
-        merged_env.extend(context.game.get_env_vars());
+        merged_env.extend(game_config.get_env_vars());
         proton_cmd.envs(&merged_env);
 
         proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", steam_dir);

@@ -26,7 +26,7 @@ pub struct Config {
     pub nexus_api_key: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GameConfig {
     /// Absolute path to the base game's installation directory
     pub path: PathBuf,
