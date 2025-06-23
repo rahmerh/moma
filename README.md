@@ -57,7 +57,7 @@ Moma only supports certain games (and game versions), game platforms and mod sou
 
 ```sh
 moma init                 # Initializes moma's folder and sets up your game(s)
-moma mod <game>           # Set active game
+moma context <game>       # Set active game
 sudo moma launch <game>   # Start game
 moma supported            # Lists supported game keys to be used in commands listed above
 ```
@@ -67,7 +67,7 @@ moma supported            # Lists supported game keys to be used in commands lis
 Set a temporary game context:
 
 ```sh
-moma mod <game>
+moma context <game>
 ```
 
 This lets you skip the <game> argument in later commands (e.g., moma launch).

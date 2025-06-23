@@ -3,7 +3,11 @@ use owo_colors::OwoColorize;
 
 use crate::{
     commands::{
-        connect::Connect, context::Context, init::Init, launch::Launch, mods::nxm::NxmHandler,
+        connect::Connect,
+        context::Context,
+        init::Init,
+        launch::Launch,
+        mods::{list_staged::ListStaged, nxm::NxmHandler},
         supported::Supported,
     },
     config::Config,
@@ -33,13 +37,21 @@ pub enum Command {
     Supported(Supported),
     #[command(about = "Automatically connect to your desired mod platforms for downloads")]
     Connect(Connect),
-    #[command(name = "mod", about = "Game mod context")]
+    #[command(about = "Sets the current active game context")]
     Context(Context),
     #[command(
         name = "nxm",
         about = "Handles the nxm link. To be used in combination with the nxm handler set up by the connect command."
     )]
     NxmHandler(NxmHandler),
+    #[command(subcommand, about = "All commands to manage mods with")]
+    Mods(ModsCommand),
+}
+
+#[derive(Subcommand)]
+pub enum ModsCommand {
+    #[command(about = "Lists all currently staged mods. An active game context is required.")]
+    ListStaged(ListStaged),
 }
 
 impl Cli {
@@ -60,6 +72,9 @@ impl Cli {
             Some(Command::Connect(cmd)) => cmd.run().await,
             Some(Command::Context(cmd)) => cmd.run(),
             Some(Command::NxmHandler(cmd)) => cmd.run(config).await,
+            Some(Command::Mods(cmd)) => match cmd {
+                ModsCommand::ListStaged(cmd) => cmd.run(),
+            },
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;
