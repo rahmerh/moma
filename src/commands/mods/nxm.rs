@@ -36,7 +36,9 @@ impl NxmHandler {
 
         let workspace = Workspace::new(config, game_config)?;
 
-        let output_path = &workspace.cache_dir().join(&file_info.file_name);
+        let mod_base_dir = &workspace.cache_dir().join(&mod_info.name);
+        std::fs::create_dir(mod_base_dir)?;
+        let output_path = mod_base_dir.join(&file_info.file_name);
         Nexus::download_file(&download_link, &output_path).await?;
 
         Command::new("notify-send")
@@ -47,7 +49,7 @@ impl NxmHandler {
             ))
             .spawn()?;
 
-        let extracted_path = &workspace.cache_dir().join(&mod_info.name).expand();
+        let extracted_path = &mod_base_dir.join(&mod_info.name).expand();
         println!("{}", extracted_path.display());
         std::fs::create_dir(extracted_path)?;
         fs::extract_archive(&output_path, &extracted_path, true)?;
