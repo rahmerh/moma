@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::types::ModInfo;
+use crate::types::{ModFileInfo, ModInfo};
 
 // Request structs
 
@@ -28,8 +28,23 @@ pub struct DownloadInfoResponse {
 }
 
 #[derive(Deserialize)]
+pub struct ModFileInfoResponse {
+    pub name: String,
+    pub file_name: String,
+}
+
+#[derive(Deserialize)]
 pub struct ModInfoResponse {
     pub name: String,
+}
+
+impl From<ModFileInfoResponse> for ModFileInfo {
+    fn from(value: ModFileInfoResponse) -> Self {
+        ModFileInfo {
+            name: value.name,
+            file_name: value.file_name,
+        }
+    }
 }
 
 impl From<ModInfoResponse> for ModInfo {

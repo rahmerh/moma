@@ -5,9 +5,9 @@ use owo_colors::OwoColorize;
 use reqwest::Url;
 
 use crate::{
-    games::{Game, workspace::Workspace},
-    sources::nexus::{self, client::NexusClient, config::Config, types::DownloadInfoRequest},
-    types::ModInfo,
+    games::Game,
+    sources::nexus::{client::NexusClient, config::Config, types::DownloadInfoRequest},
+    types::{ModFileInfo, ModInfo},
     ui::prompt,
 };
 
@@ -138,6 +138,21 @@ impl Nexus {
         Ok(info)
     }
 
+    pub async fn get_mod_file_info(
+        game: &Game,
+        mod_id: &str,
+        file_id: &str,
+    ) -> anyhow::Result<ModFileInfo> {
+        let config = Config::load()?;
+        let client = NexusClient::new(&config)?;
+
+        let response = client.get_mod_file_info(game, mod_id, file_id).await?;
+
+        let info: ModFileInfo = response.into();
+
+        Ok(info)
+    }
+
     pub async fn get_download_link(nxmlink: NxmLink) -> anyhow::Result<Url> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
@@ -149,17 +164,11 @@ impl Nexus {
         Ok(Url::parse(&response.uri)?)
     }
 
-    pub async fn download_file(
-        url: &Url,
-        mod_name: &str,
-        workspace: &Workspace,
-    ) -> anyhow::Result<()> {
+    pub async fn download_file(url: &Url, output_file: &PathBuf) -> anyhow::Result<()> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
 
-        // client.download_file(url, game, mod_name).await?;
-
-        Ok(())
+        client.download_file(url, &output_file).await
     }
 
     pub fn parse_nxm_url(link: &str) -> anyhow::Result<NxmLink> {

@@ -1,7 +1,11 @@
 use std::{
-    fs, io,
+    fs::{self, File},
+    io,
     path::{Path, PathBuf},
 };
+
+use anyhow::{Context, bail};
+use zip::ZipArchive;
 
 pub trait ExpandTilde {
     fn expand(&self) -> PathBuf;
@@ -19,7 +23,17 @@ pub fn extract_archive(
     target_dir: &Path,
     flatten: bool,
 ) -> anyhow::Result<()> {
-    sevenz_rust2::decompress_file(archive_path, target_dir)?;
+    let ext = archive_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|s| s.to_lowercase());
+
+    match ext.as_deref() {
+        Some("zip") => extract_zip(archive_path, target_dir)?,
+        Some("7z") => sevenz_rust2::decompress_file(archive_path, target_dir)?,
+        Some(ext) => bail!("Unsupported archive format: .{}", ext),
+        None => bail!("Archive file has no extension"),
+    }
 
     if flatten {
         let entries: Vec<_> = fs::read_dir(target_dir)?.filter_map(Result::ok).collect();
@@ -72,6 +86,29 @@ pub fn copy_dir(from: &Path, to: &Path, recursive: bool, flatten: bool) -> io::R
             }
         } else if metadata.is_file() {
             fs::copy(&src_path, &dest_path)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn extract_zip(archive_path: &Path, target_dir: &Path) -> anyhow::Result<()> {
+    let file = File::open(archive_path).context("Failed to open ZIP archive")?;
+    let mut archive = ZipArchive::new(file).context("Failed to read ZIP archive")?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)?;
+        let out_path = target_dir.join(file.mangled_name());
+
+        if file.name().ends_with('/') {
+            fs::create_dir_all(&out_path)?;
+        } else {
+            if let Some(p) = out_path.parent() {
+                fs::create_dir_all(p)?;
+            }
+
+            let mut out_file = fs::File::create(&out_path)?;
+            std::io::copy(&mut file, &mut out_file)?;
         }
     }
 

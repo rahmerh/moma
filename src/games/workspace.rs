@@ -8,11 +8,11 @@ use anyhow::Context;
 
 use crate::{
     config::{Config, GameConfig},
-    games::Game,
     utils::os::permissions,
 };
 
 const OVERLAY: &str = ".overlay";
+const CACHE: &str = ".cache";
 const MERGED: &str = "merged";
 const WORK: &str = "work";
 const ACTIVE: &str = "active";
@@ -52,6 +52,10 @@ impl Workspace {
 
     pub fn sink_dir(&self) -> PathBuf {
         self.root.join(SINK)
+    }
+
+    pub fn cache_dir(&self) -> PathBuf {
+        self.root.join(CACHE)
     }
 
     pub fn proton_work_dir(&self) -> PathBuf {

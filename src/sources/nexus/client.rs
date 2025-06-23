@@ -1,16 +1,24 @@
+use std::path::PathBuf;
+
 use anyhow::{Context, bail};
+use futures::TryStreamExt;
 use reqwest::{
     Client, Url,
     header::{self, HeaderMap, HeaderValue},
 };
+use tokio_util::io::StreamReader;
 
 use crate::{
     games::Game,
     sources::nexus::{
         self,
         config::Config,
-        types::{DownloadInfoRequest, DownloadInfoResponse, ModInfoResponse, ValidateResponse},
+        types::{
+            DownloadInfoRequest, DownloadInfoResponse, ModFileInfoResponse, ModInfoResponse,
+            ValidateResponse,
+        },
     },
+    ui::progress,
 };
 
 const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
@@ -104,19 +112,47 @@ impl NexusClient {
 
         let res = self.client.get(url).send().await?;
 
-        let mod_info: ModInfoResponse = res.json().await?;
+        let file_info: ModInfoResponse = res.json().await?;
 
-        Ok(mod_info)
+        Ok(file_info)
     }
 
-    pub async fn download_file(
+    pub async fn get_mod_file_info(
         &self,
-        url: &Url,
-        game: &str,
-        mode_name: &str,
-    ) -> anyhow::Result<()> {
-        // self.client.get(url).send().await?;
+        game: &Game,
+        mod_id: &str,
+        file_id: &str,
+    ) -> anyhow::Result<ModFileInfoResponse> {
+        let url = Url::parse(NEXUS_BASE_URL)?
+            .join("games/")?
+            .join(&format!("{}/", nexus::to_nexus_domain(game)?))?
+            .join("mods/")?
+            .join(&format!("{}/", mod_id))?
+            .join("files/")?
+            .join(&format!("{}.json", file_id))?;
 
-        Ok(())
+        let res = self.client.get(url).send().await?;
+
+        let file_info: ModFileInfoResponse = res.json().await?;
+
+        Ok(file_info)
+    }
+
+    pub async fn download_file(&self, url: &Url, output_file: &PathBuf) -> anyhow::Result<()> {
+        let res = self.client.get(url.clone()).send().await?;
+        let total_size = res.content_length().unwrap_or(0);
+
+        let stream = StreamReader::new(
+            res.bytes_stream()
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)),
+        );
+
+        progress::stream_to_file(
+            &format!("Downloading to '{}'", output_file.display()),
+            stream,
+            &output_file,
+            total_size,
+        )
+        .await
     }
 }
