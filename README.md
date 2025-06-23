@@ -2,120 +2,81 @@
   <img src="assets/banner.png" alt="Moma banner" width="100%" />
 </p>
 
-**Moma** is a Linux-first, CLI **mo**d **ma**nager.
+> The layered CLI mod manager.
 
-Moma automates everything you need to start modding your games on Linux. It takes care of downloading mods, setting up tools, and managing your configuration in a simple, declarative format, so your mod setup stays clean, trackable, and easy to reproduce.
+---
 
-To keep your game installation untouched, Moma builds a temporary environment where mods are layered only when you launch the game. Your base files remain unchanged, and mods don’t need to be installed directly into the game folder.
+Moma takes modding seriously — no Wine wrappers, no messy installs, no Windows baggage.
 
-Moma avoids Windows-native mod management tools and fully embraces native Linux features. It's designed for minimal, terminal-driven modding without sacrificing control or flexibility.
+It layers mods over your game's directory in order to launch the game from 1 folder containing everything, meaning:
+
+- **No pollution of your game folder**
+- **Seperated mod folders for easy maintenance**
+- **No need to run any mod manager through wine ever again**
+
+Moma is linux first, it skips all the Windows-based junk and uses native linux tools. It's made for people who prefer the terminal and want control, but don’t want to set everything up by hand.
 
 **⚠️ Warning! Moma is in early development. It will break. You’ve been warned.**
 
+## Features
+
+- Automatic game setup, including installation of modding tools using `moma init`
+- Mount mod folders and launch game using `moma launch`
+
 ## Installation
 
-Make sure you have [Rust](https://www.rust-lang.org/tools/install) installed first. Then clone the repo:
+### Requirements
+- [Rust](https://www.rust-lang.org/tools/install)
 
 ```sh
 git clone https://github.com/rahmerh/moma.git
 cd moma
-```
-
-If you want the latest, stable binary check out main first:
-
-```sh
 git checkout main
-```
-
-If you want latest (and potentially broken), stay on develop.
-
-Run the following to install the binary system-wide:
-```sh
+make build
 sudo make install
 ```
 
+*Note, if you want most current features, but potentially broken code, stay on develop*
+
 This will copy the binary to `/usr/local/bin/moma`. You can now run moma from anywhere.
 
-> 💡 **Hint:** You can also install it locally without sudo:
->
-> ```sh
-> mkdir -p ~/.local/bin
-> cp target/release/moma ~/.local/bin
-> ```
-> Make sure `~/.local/bin` is in your `PATH`.
+## Supported games and mod sources
 
-## Support
-
-Moma only supports certain game platforms and games (and game versions). This is mostly because I won't buy games I'm not going to play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
-
-### Supported game platforms
-
-- Steam (Proton or native)
+Moma only supports certain games (and game versions), game platforms and mod sources. This is because I'm not going to buy games I won't play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
 
 ### Supported games
 
 - Skyrim SE/AE (SKSE modded)
 
-### Supported mod platforms
+### Supported game platforms
+
+- Steam (Proton or native)
+
+### Supported mod sources
 
 - [Nexus mods](https://www.nexusmods.com/)
 
 ## Usage
 
-### Initialize
 ```sh
-moma init
-```
-### Launch a game
-```sh
-sudo moma launch <game>
-```
-### Connect to a mod platform
-```sh
-moma connect <platform>
-```
-### List supported games/platforms
-```sh
-moma supported
+moma init                 # Initializes moma's folder and sets up your game(s)
+moma mod <game>           # Set active game
+sudo moma launch <game>   # Start game
+moma supported            # Lists supported game keys to be used in commands listed above
 ```
 
-For more information about the correct usage, see `docs/usage.md`
+## Game Context
 
-## Game context
-
-You can enter a temporary game context so you don’t need to specify the game every time.
+Set a temporary game context:
 
 ```sh
 moma mod <game>
 ```
 
-This sets a temporary game context stored in /tmp/moma_state, which will be used by all subsequent commands. You’ll see a note like:
-
-```sh
-[Skyrimse]
-```
-
-This session then allows you to run commands like:
-
-```sh
-sudo moma launch
-```
-Without having to specify the game. This context resets when you reboot or change/clear it manually.
-
-## Configuration
-
-Moma stores configuration in a single TOML file, at `~/.config/moma/config.toml`.
-
-When you run `moma init`, it creates the file for you. You can also edit it manually to adjust paths, Proton versions, or game settings.
-
-See `docs/config.md` for all options.
+This lets you skip the <game> argument in later commands (e.g., moma launch).
+The context is stored in /tmp/moma_state and resets on reboot or manual change.
 
 ## Roadmap
-
-### Done
-- **0.1.0** - Initialize moma folders with 'moma init'
-- **0.2.0** - Mount folders and launch game with 'sudo moma launch <game>'
-- **0.3.0** - Installation guide (Makefile + instructions)
 
 ### In progress
 NXM link handler (Nexus download URLs)
