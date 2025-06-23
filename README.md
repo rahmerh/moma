@@ -122,12 +122,14 @@ NXM link handler (Nexus download URLs)
 
 ### Planned
 - (Unit) tests
-- Load order management
+- Load order management 
 - FOMOD CLI wizard
 - Game file cache management
 - Proper error handling (remove anyhow crate)
 - Logging for debug purposes
 - Proper usage- and in depth documentation
+- Live mounted preview (to show overrides and metadata)
+- Load order validator and sorter
 
 ## Motivation
 
