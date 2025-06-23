@@ -3,9 +3,7 @@ use std::fmt::{self, Display};
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
-use crate::sources::nexus::Nexus;
-
-mod nexus;
+pub mod nexus;
 
 #[derive(clap::ValueEnum, Debug, Clone, Serialize, Deserialize, EnumIter)]
 pub enum Source {
@@ -19,13 +17,5 @@ impl Display for Source {
         };
 
         write!(f, "{}", name)
-    }
-}
-
-impl Source {
-    pub async fn setup(&self) -> anyhow::Result<()> {
-        match self {
-            Source::Nexus => Nexus::setup().await,
-        }
     }
 }

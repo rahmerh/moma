@@ -1,10 +1,14 @@
 use std::{fs, path::PathBuf, process::Command};
 
-use anyhow::Context;
+use anyhow::{Context, bail};
 use owo_colors::OwoColorize;
+use reqwest::Url;
 
 use crate::{
-    sources::nexus::{client::NexusClient, config::Config},
+    sources::nexus::{
+        client::{DownloadInfoRequest, NexusClient},
+        config::Config,
+    },
     ui::prompt,
 };
 
@@ -12,6 +16,26 @@ mod client;
 pub mod config;
 
 pub struct Nexus;
+
+pub struct NxmLink {
+    pub game: String,
+    pub mod_id: String,
+    pub file_id: String,
+    pub key: String,
+    pub expires: String,
+}
+
+impl From<NxmLink> for DownloadInfoRequest {
+    fn from(link: NxmLink) -> Self {
+        Self {
+            game: link.game,
+            mod_id: link.mod_id,
+            file_id: link.file_id,
+            key: link.key,
+            expires: link.expires,
+        }
+    }
+}
 
 impl Nexus {
     pub fn is_setup() -> bool {
@@ -101,5 +125,57 @@ impl Nexus {
         }
 
         Ok(())
+    }
+
+    pub async fn get_download_link(nxmlink: NxmLink) -> anyhow::Result<Url> {
+        let config = Config::load()?;
+        let client = NexusClient::new(&config)?;
+
+        let download_info: DownloadInfoRequest = nxmlink.into();
+
+        let response = client.get_download_link(download_info).await?;
+
+        Ok(Url::parse(&response.uri)?)
+    }
+
+    pub fn parse_nxm_url(link: &str) -> anyhow::Result<NxmLink> {
+        let url = Url::parse(link).context("Failed to parse NXM URL")?;
+
+        let game = url.host_str().context("Missing game (host)")?.to_string();
+
+        let segments: Vec<_> = url.path_segments().map(|c| c.collect()).unwrap_or_default();
+
+        if segments.len() < 4 {
+            bail!("Invalid NXM URL format");
+        }
+
+        if segments[0] != "mods" || segments[2] != "files" {
+            bail!("Unexpected NXM URL path structure");
+        }
+
+        let mod_id = segments[1].to_string();
+        let file_id = segments[3].to_string();
+
+        let query_pairs = url
+            .query_pairs()
+            .collect::<std::collections::HashMap<_, _>>();
+
+        let key = query_pairs
+            .get("key")
+            .context("Missing key parameter")?
+            .to_string();
+
+        let expires = query_pairs
+            .get("expires")
+            .context("Missing expires parameter")?
+            .to_string();
+
+        Ok(NxmLink {
+            game,
+            mod_id,
+            file_id,
+            key,
+            expires,
+        })
     }
 }
