@@ -2,11 +2,7 @@
   <img src="assets/banner.png" alt="Moma banner" width="100%" />
 </p>
 
-> The layered CLI mod manager.
-
----
-
-Moma takes modding seriously — no Wine wrappers, no messy installs, no Windows baggage.
+Moma takes care of all business to help you start modding your games as soon as possible.
 
 It layers mods over your game's directory in order to launch the game from 1 folder containing everything, meaning:
 
@@ -28,6 +24,7 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 ### Requirements
 - [Rust](https://www.rust-lang.org/tools/install)
 
+### Install steps
 ```sh
 git clone https://github.com/rahmerh/moma.git
 cd moma
@@ -42,11 +39,11 @@ This will copy the binary to `/usr/local/bin/moma`. You can now run moma from an
 
 ## Supported games and mod sources
 
-Moma only supports certain games (and game versions), game platforms and mod sources. This is because I'm not going to buy games I won't play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
+Moma only supports certain games (and game versions), game platforms and mod sources. This is because I won't buy games I'm not going to play, so I can't reliably add support for it. If you want a game that isn't on the list, feel free to add an issue to request support. I'd be happy to help.
 
 ### Supported games
 
-- Skyrim SE/AE (SKSE modded)
+- Skyrim SE/AE (SKSE)
 
 ### Supported game platforms
 
@@ -83,6 +80,7 @@ NXM link handler (Nexus download URLs)
 
 ### Planned
 - (Unit) tests
+- Standardized prints and workflows
 - Load order management 
 - FOMOD CLI wizard
 - Game file cache management
