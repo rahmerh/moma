@@ -83,6 +83,7 @@ NXM link handler (Nexus download URLs)
 ### Planned
 - (Unit) tests
 - Standardized prints and workflows
+- TUI
 - Load order management 
 - FOMOD CLI wizard
 - Game file cache management
