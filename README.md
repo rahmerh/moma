@@ -2,7 +2,7 @@
   <img src="assets/banner.png" alt="Moma banner" width="100%" />
 </p>
 
-[![Build](https://github.com/rahmerh/moma/actions/workflows/ci.yml/badge.svg)](https://github.com/rahmerh/moma/actions/workflows/ci.yml)
+![Build Status](https://github.com/rahmerh/moma/actions/workflows/ci.yml/badge.svg)
 
 Moma helps you start modding your games on Linux — fast.
 
