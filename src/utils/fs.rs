@@ -23,6 +23,10 @@ pub fn extract_archive(
     target_dir: &Path,
     flatten: bool,
 ) -> anyhow::Result<()> {
+    if !archive_path.exists() {
+        bail!("Archive at '{}' does not exist.", archive_path.display());
+    }
+
     let ext = archive_path
         .extension()
         .and_then(|e| e.to_str())

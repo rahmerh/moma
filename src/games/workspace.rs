@@ -20,6 +20,8 @@ const STAGING: &str = "staging";
 const SINK: &str = "sink";
 const PROTON: &str = "proton";
 
+pub const ARCHIVES: &str = "archives";
+
 /// Represents the game-specific working directory structure
 pub struct Workspace {
     /// The user-defined configuration for this game (install path, Proton version, etc.)

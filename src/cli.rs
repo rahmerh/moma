@@ -7,7 +7,7 @@ use crate::{
         context::Context,
         init::Init,
         launch::Launch,
-        mods::{list_staged::ListStaged, nxm::NxmHandler},
+        mods::{install::Install, list_staged::ListStaged, nxm::NxmHandler},
         supported::Supported,
     },
     config::Config,
@@ -56,6 +56,8 @@ pub enum ModsCommand {
         about = "Lists all currently staged mods. An active game context is required."
     )]
     ListStaged(ListStaged),
+    #[command(about = "Installs mods from your staging directory.")]
+    Install(Install),
 }
 
 impl Cli {
@@ -73,6 +75,7 @@ impl Cli {
             Some(Command::NxmHandler(cmd)) => cmd.run(config).await,
             Some(Command::Mods(cmd)) => match cmd {
                 ModsCommand::ListStaged(cmd) => cmd.run(config),
+                ModsCommand::Install(cmd) => cmd.run(config),
             },
             None => {
                 use clap::CommandFactory;

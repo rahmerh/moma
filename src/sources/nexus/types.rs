@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::types::{ModFileInfo, ModInfo};
+use crate::types::{InstallationStatus, ModFileInfo, ModInfo};
 
 // Request structs
 
@@ -35,6 +35,7 @@ pub struct ModFileInfoResponse {
 
 #[derive(Deserialize)]
 pub struct ModInfoResponse {
+    pub uid: u64,
     pub name: String,
 }
 
@@ -43,12 +44,17 @@ impl From<ModFileInfoResponse> for ModFileInfo {
         ModFileInfo {
             uid: value.uid,
             file_name: value.file_name,
+            status: InstallationStatus::Pending,
         }
     }
 }
 
 impl From<ModInfoResponse> for ModInfo {
     fn from(value: ModInfoResponse) -> Self {
-        ModInfo { name: value.name }
+        ModInfo {
+            name: value.name,
+            uid: value.uid,
+            downloaded_archives: vec![],
+        }
     }
 }

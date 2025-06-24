@@ -1,9 +1,15 @@
 use std::{
     fmt::Display,
+    io::{Write, stdout},
     path::{Path, PathBuf},
 };
 
 use anyhow::Context;
+use crossterm::{
+    cursor::{MoveDown, MoveToColumn, MoveUp},
+    execute,
+    terminal::{Clear, ClearType},
+};
 use dialoguer::{Confirm, Input, MultiSelect, Password, Select};
 use owo_colors::OwoColorize;
 
@@ -103,6 +109,7 @@ pub fn select_multiple<T: Display + Clone>(prompt: &str, options: &[T]) -> anyho
 
     let labels: Vec<String> = sorted_items.iter().map(|item| item.to_string()).collect();
 
+    let mut errored = false;
     loop {
         let selection = MultiSelect::with_theme(&theme)
             .with_prompt(prompt)
@@ -110,12 +117,21 @@ pub fn select_multiple<T: Display + Clone>(prompt: &str, options: &[T]) -> anyho
             .interact()?;
 
         if selection.is_empty() {
+            let clear_lines = match errored {
+                true => 2,
+                false => 1,
+            };
+            clear_previous_lines(clear_lines, 0)?;
             println!("{}", "Please select at least one option.".red());
+            errored = true;
         } else {
             let selected_items = selection
                 .into_iter()
                 .map(|i| sorted_items[i].clone())
                 .collect();
+            if errored {
+                clear_previous_lines(1, 1)?;
+            }
             return Ok(selected_items);
         }
     }
@@ -130,4 +146,28 @@ pub fn input(prompt: &str, allow_empty: bool) -> anyhow::Result<String> {
         .interact_text()?;
 
     Ok(value)
+}
+
+/// Clears lines from the cursor's position upwards. Will skip x amount before erasing lines if value > 0 given.
+fn clear_previous_lines(amount: u16, skip: u16) -> std::io::Result<()> {
+    let mut stdout = stdout();
+
+    if skip > 0 {
+        execute!(stdout, MoveUp(skip), MoveToColumn(0))?;
+    }
+
+    for _ in 0..amount {
+        execute!(
+            stdout,
+            MoveUp(1),
+            MoveToColumn(0),
+            Clear(ClearType::CurrentLine),
+        )?;
+    }
+
+    if skip > 0 {
+        execute!(stdout, MoveDown(1 + skip), MoveToColumn(0))?;
+    }
+
+    stdout.flush()
 }

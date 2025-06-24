@@ -13,7 +13,6 @@ pub struct NxmHandler {
 }
 
 impl NxmHandler {
-    // nxm://skyrimspecialedition/mods/152490/files/638592?key=0Or2IM4l-FXSJjvRogxbMw&expires=1750810470&user_id=191018313
     pub async fn run(&self, config: &Config) -> anyhow::Result<()> {
         let parsed = Nexus::parse_nxm_url(&self.url)?;
 
@@ -26,7 +25,7 @@ impl NxmHandler {
 
         notify::send_notification(&format!("Starting '{}' download", file_info.file_name))?;
 
-        let staged_archive_path = manager.prepare_staging_download(&file_info)?;
+        let staged_archive_path = manager.prepare_staging_download(&mod_info, &file_info)?;
 
         if staged_archive_path.exists() {
             notify::send_notification(&format!(
@@ -40,7 +39,7 @@ impl NxmHandler {
         let download_link = Nexus::get_download_link(parsed).await?;
         Nexus::download_file(&download_link, &staged_archive_path).await?;
 
-        manager.write_mod_info(file_info.uid, &mod_info)?;
+        manager.register_archive(&mod_info, &file_info)?;
 
         notify::send_notification(&format!(
             "Downloaded {} to '{}'",
