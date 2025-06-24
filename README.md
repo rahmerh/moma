@@ -18,8 +18,8 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 
 ## Features
 
-- Automatic game setup, including installation of modding tools using `moma init`
-- Mount mod folders and launch game using `moma launch`
+- Automatic game setup, including modding tools (`moma init`)
+- Launch games with layered mod folders (`moma launch`)
 
 ## Installation
 
