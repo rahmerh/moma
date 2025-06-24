@@ -2,15 +2,17 @@
   <img src="assets/banner.png" alt="Moma banner" width="100%" />
 </p>
 
-Moma takes care of all business to help you start modding your games as soon as possible.
+Moma helps you start modding your games on Linux — fast.
 
-It layers mods over your game's directory in order to launch the game from 1 folder containing everything, meaning:
+It layers mods over your game’s files in a clean, temporary environment, so you launch from a single merged folder without touching your original install.
+
+This means:
 
 - **No pollution of your game folder**
 - **Seperated mod folders for easy maintenance**
-- **No need to run any mod manager through wine ever again**
+- **No need to run mod manager through Wine ever again**
 
-Moma is linux first, it skips all the Windows-based junk and uses native linux tools. It's made for people who prefer the terminal and want control, but don’t want to set everything up by hand.
+Moma is linux first, it skips all the Windows-based junk and uses native linux tools. Built for terminal users who want control without spending hours setting everything up manually.
 
 **⚠️ Warning! Moma is in early development. It will break. You’ve been warned.**
 
