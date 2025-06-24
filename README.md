@@ -26,7 +26,7 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 ### Requirements
 - [Rust](https://www.rust-lang.org/tools/install)
 
-### Install steps
+### Install
 ```sh
 git clone https://github.com/rahmerh/moma.git
 cd moma
@@ -34,10 +34,9 @@ git checkout main
 make build
 sudo make install
 ```
+> *Want the latest features (and bugs)? Stay on develop.*
 
-*Note, if you want most current features, but potentially broken code, stay on develop*
-
-This will copy the binary to `/usr/local/bin/moma`. You can now run moma from anywhere.
+This installs `moma` to `/usr/local/bin`, so you can run it from anywhere.
 
 ## Supported games and mod sources
 
@@ -66,14 +65,13 @@ moma supported            # Lists supported game keys to be used in commands lis
 
 ## Game Context
 
-Set a temporary game context:
-
+You can set a temporary game context:
 ```sh
 moma context <game>
 ```
 
 This lets you skip the <game> argument in later commands (e.g., moma launch).
-The context is stored in /tmp/moma_state and resets on reboot or manual change.
+Stored in `/tmp/moma_state`, resets on reboot or when changed manually.
 
 ## Roadmap
 
@@ -90,7 +88,7 @@ NXM link handler (Nexus download URLs)
 - Logging for debug purposes
 - Proper usage- and in depth documentation
 - Live mounted preview (to show overrides and metadata)
-- Load order validator and sorter
+- Load order validation and sorting
 
 ## Motivation
 
