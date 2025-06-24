@@ -11,7 +11,7 @@ use crate::{
         supported::Supported,
     },
     config::Config,
-    utils::{state, string::StringUtils},
+    utils::state,
 };
 
 #[derive(Parser)]
@@ -44,25 +44,24 @@ pub enum Command {
         about = "Handles the nxm link. To be used in combination with the nxm handler set up by the connect command."
     )]
     NxmHandler(NxmHandler),
-    #[command(subcommand, about = "All commands to manage mods with")]
+    #[command(subcommand, name = "mod", about = "All commands to manage mods with")]
     Mods(ModsCommand),
 }
 
 #[derive(Subcommand)]
 pub enum ModsCommand {
-    #[command(about = "Lists all currently staged mods. An active game context is required.")]
+    #[command(
+        name = "list-staged",
+        visible_alias = "ls",
+        about = "Lists all currently staged mods. An active game context is required."
+    )]
     ListStaged(ListStaged),
 }
 
 impl Cli {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         if let Some(game) = state::current_context()? {
-            println!(
-                "{}{}{}",
-                "[".cyan(),
-                game.to_string().capitalize().bold(),
-                "]".cyan()
-            );
+            println!("{}{}{}", "[".cyan(), game.to_string().bold(), "]".cyan());
         }
 
         match &self.command {
@@ -73,7 +72,7 @@ impl Cli {
             Some(Command::Context(cmd)) => cmd.run(),
             Some(Command::NxmHandler(cmd)) => cmd.run(config).await,
             Some(Command::Mods(cmd)) => match cmd {
-                ModsCommand::ListStaged(cmd) => cmd.run(),
+                ModsCommand::ListStaged(cmd) => cmd.run(config),
             },
             None => {
                 use clap::CommandFactory;
