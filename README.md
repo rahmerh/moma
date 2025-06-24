@@ -2,6 +2,8 @@
   <img src="assets/banner.png" alt="Moma banner" width="100%" />
 </p>
 
+[![Build](https://github.com/rahmerh/moma/actions/workflows/ci.yml/badge.svg)](https://github.com/rahmerh/moma/actions/workflows/ci.yml)
+
 Moma helps you start modding your games on Linux — fast.
 
 It layers mods over your game’s files in a clean, temporary environment, so you launch from a single merged folder without touching your original install.
