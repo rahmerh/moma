@@ -21,7 +21,7 @@ impl Config {
             .ok_or_else(|| anyhow!("Failed to resolve config path"))?;
 
         if !config_file_path.exists() {
-            bail!("Config file could not be found, did you run 'moma connect nexus'?");
+            bail!("Nexus config could not be found, did you run 'moma connect nexus'?");
         }
 
         let contents = fs::read_to_string(&config_file_path)

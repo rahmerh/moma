@@ -76,10 +76,7 @@ impl Workspace {
     }
 
     pub fn prepare_file_system(&self) -> anyhow::Result<()> {
-        fs::create_dir_all(self.sink_dir())?;
         fs::create_dir_all(self.proton_work_dir())?;
-        fs::create_dir_all(self.staging_dir())?;
-
         permissions::chown_dir(&self.proton_work_dir(), false)
             .with_context(|| "Could not set proton working dir permissions.")?;
 
@@ -103,10 +100,11 @@ impl Workspace {
         let merged = self.overlay_merged_dir();
         let work = self.overlay_work_dir();
         let active = self.active_dir();
+        let sink = self.sink_dir();
         let overlay_root = self.root.join(OVERLAY);
 
         if overlay_root.exists() {
-            for dir in [&merged, &work, &active] {
+            for dir in [&merged, &work, &active, &sink] {
                 match fs::remove_dir_all(dir) {
                     Ok(_) => {}
                     Err(err) if err.kind() == ErrorKind::NotFound => {}
@@ -118,7 +116,7 @@ impl Workspace {
             }
         }
 
-        for dir in [&merged, &work, &active] {
+        for dir in [&merged, &work, &active, &sink] {
             fs::create_dir_all(dir)
                 .with_context(|| format!("Failed to create {}", dir.display()))?;
         }

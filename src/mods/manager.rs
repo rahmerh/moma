@@ -12,6 +12,7 @@ use crate::{
         workspace::{self, Workspace},
     },
     types::{ModFileInfo, ModInfo},
+    utils,
 };
 
 pub struct Manager {
@@ -100,8 +101,28 @@ impl Manager {
         Ok(mods)
     }
 
-    pub fn extract_and_move_mods(&self, mods: Vec<ModInfo>) {
-        // utils::fs::extract_archive(archive_path, target_dir, flatten)
+    pub fn get_staged_archive_path(&self, mod_info: &ModInfo, archive_name: &str) -> PathBuf {
+        self.workspace
+            .staging_dir()
+            .join(mod_info.uid.to_string())
+            .join(workspace::ARCHIVES)
+            .join(archive_name)
+    }
+
+    pub fn install_archive(&self, archives: Vec<PathBuf>) -> anyhow::Result<()> {
+        let mods_dir = self.workspace.mods_dir();
+
+        for archive in archives {
+            utils::fs::extract_archive(
+                &archive,
+                &mods_dir.join(archive.file_name().unwrap()),
+                false,
+            )?;
+
+            fs::remove_file(&archive)?;
+        }
+
+        Ok(())
     }
 
     fn get_staging_dir_for_mod(&self, uid: &u64) -> PathBuf {

@@ -5,7 +5,15 @@ use libc::CLONE_NEWNS;
 
 use crate::games::workspace::Workspace;
 
-pub fn mount_overlay_for(context: &Workspace) -> anyhow::Result<()> {
+pub fn mount_overlay_for(workspace: &Workspace) -> anyhow::Result<()> {
+    log::debug!(
+        "lowerdir={}:{},upperdir={},workdir={}",
+        workspace.overlay_merged_dir().display(),
+        workspace.game_dir().display(),
+        workspace.sink_dir().display(),
+        workspace.overlay_work_dir().display(),
+    );
+
     Command::new("mount")
         .args([
             "-t",
@@ -14,12 +22,12 @@ pub fn mount_overlay_for(context: &Workspace) -> anyhow::Result<()> {
             "-o",
             &format!(
                 "lowerdir={}:{},upperdir={},workdir={}",
-                context.game_dir().display(),
-                context.overlay_merged_dir().display(),
-                context.sink_dir().display(),
-                context.overlay_work_dir().display(),
+                workspace.overlay_merged_dir().display(),
+                workspace.game_dir().display(),
+                workspace.sink_dir().display(),
+                workspace.overlay_work_dir().display(),
             ),
-            context.active_dir().to_str().unwrap(),
+            workspace.active_dir().to_str().unwrap(),
         ])
         .status()
         .with_context(|| "Overlay mount failed")?

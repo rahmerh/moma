@@ -1,3 +1,4 @@
+use anyhow::bail;
 use clap::Args;
 
 use crate::{
@@ -20,7 +21,19 @@ impl NxmHandler {
         let game = nexus::from_nexus_domain(domain)?;
         let manager = Manager::new(&game, &config)?;
 
-        let file_info = Nexus::get_mod_file_info(&game, &parsed.mod_id, &parsed.file_id).await?;
+        let file_info_result =
+            Nexus::get_mod_file_info(&game, &parsed.mod_id, &parsed.file_id).await;
+        let file_info = match file_info_result {
+            Ok(i) => i,
+            Err(i) => {
+                notify::send_notification(&format!(
+                    "A problem occured during download: '{}'",
+                    i.to_string()
+                ))?;
+                bail!(i.to_string())
+            }
+        };
+
         let mod_info = Nexus::get_mod_info(&game, &parsed.mod_id).await?;
 
         notify::send_notification(&format!("Starting '{}' download", file_info.file_name))?;

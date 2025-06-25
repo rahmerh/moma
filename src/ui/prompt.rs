@@ -148,7 +148,7 @@ pub fn input(prompt: &str, allow_empty: bool) -> anyhow::Result<String> {
     Ok(value)
 }
 
-/// Clears lines from the cursor's position upwards. Will skip x amount before erasing lines if value > 0 given.
+/// Clears lines from the cursor's position upwards. Will skip x amount before erasing lines if skip > 0 given.
 fn clear_previous_lines(amount: u16, skip: u16) -> std::io::Result<()> {
     let mut stdout = stdout();
 

@@ -1,11 +1,12 @@
+use std::path::PathBuf;
+
 use anyhow::bail;
 use clap::Args;
-use owo_colors::OwoColorize;
 
 use crate::{
     config::Config,
     mods::manager::Manager,
-    ui::{print::Colorize, prompt},
+    ui::{prompt, reorder},
     utils::state,
 };
 
@@ -23,17 +24,42 @@ impl Install {
         };
 
         let manager = Manager::new(&current_game, config)?;
-        let staged_games = manager.get_staged_mod_infos()?;
+        let staged_mods = manager.get_staged_mod_infos()?;
 
-        let games_to_install;
+        let mods_to_install;
         if self.all {
-            games_to_install = staged_games;
+            mods_to_install = staged_mods;
         } else {
-            games_to_install =
-                prompt::select_multiple("Select the mods you want to install", &staged_games)?;
+            mods_to_install =
+                prompt::select_multiple("Select the mods you want to install", &staged_mods)?;
         }
 
-        manager.extract_and_move_mods(games_to_install);
+        let mut files_to_install: Vec<PathBuf> = Vec::new();
+        for mod_to_install in mods_to_install {
+            if mod_to_install.downloaded_archives.len() > 1 {
+                let selected_files = prompt::select_multiple(
+                    "Select the archives to install",
+                    &mod_to_install.downloaded_archives,
+                )?;
+
+                let selected_files = reorder::reorder_items(selected_files)?;
+
+                files_to_install.extend(
+                    selected_files
+                        .iter()
+                        .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
+                );
+            } else {
+                files_to_install.extend(
+                    mod_to_install
+                        .downloaded_archives
+                        .iter()
+                        .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
+                );
+            }
+        }
+
+        manager.install_archive(files_to_install)?;
 
         Ok(())
     }

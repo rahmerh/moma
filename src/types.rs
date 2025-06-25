@@ -24,6 +24,12 @@ pub enum InstallationStatus {
     Error,
 }
 
+impl Display for ModFileInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.file_name)
+    }
+}
+
 impl Display for ModInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.name)

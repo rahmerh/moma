@@ -57,7 +57,7 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
         if event::poll(Duration::from_millis(500))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Up => {
+                    KeyCode::Up | KeyCode::Char('k') => {
                         if let Some(selected) = selected_index {
                             if selected > 0 {
                                 items.swap(selected, selected - 1);
@@ -68,7 +68,7 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
                             cursor_index -= 1;
                         }
                     }
-                    KeyCode::Down => {
+                    KeyCode::Down | KeyCode::Char('j') => {
                         if let Some(selected) = selected_index {
                             if selected < items.len() - 1 {
                                 items.swap(selected, selected + 1);
@@ -87,13 +87,9 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
                         }
                     }
                     KeyCode::Enter => break,
-                    KeyCode::Char('q') => {
-                        execute!(stdout, cursor::MoveTo(0, y))?;
-                        terminal::disable_raw_mode()?;
-                        erase_previous_lines(total_height)?;
-                        bail!("Process was interrupted by user")
-                    }
-                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    KeyCode::Char('q') | KeyCode::Char('c')
+                        if key.modifiers.contains(KeyModifiers::CONTROL) =>
+                    {
                         execute!(stdout, cursor::MoveTo(0, y))?;
                         terminal::disable_raw_mode()?;
                         erase_previous_lines(total_height)?;
