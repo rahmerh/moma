@@ -52,6 +52,7 @@ impl Launch {
         };
 
         let context = Workspace::new(config, &game_config)?;
+        context.prepare_file_system()?;
 
         if !context.validate_sink_is_empty()? {
             if self.force {
@@ -75,8 +76,6 @@ impl Launch {
 
         mount::unshare_current_namespace()?;
         mount::remount_current_namespace_as_private()?;
-
-        context.prepare_file_system()?;
 
         mount::mount_overlay_for(&context)
             .with_context(|| format!("Could not mount overlay folders for {}", game))?;

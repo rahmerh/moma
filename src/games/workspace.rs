@@ -12,6 +12,7 @@ use crate::{
 };
 
 const OVERLAY: &str = ".overlay";
+const CACHE: &str = ".cache";
 const MERGED: &str = "merged";
 const WORK: &str = "work";
 const ACTIVE: &str = "active";
@@ -21,6 +22,8 @@ const SINK: &str = "sink";
 const PROTON: &str = "proton";
 
 pub const ARCHIVES: &str = "archives";
+
+pub const MOD_LIST_FILE: &str = "mod-list.json";
 
 /// Represents the game-specific working directory structure
 pub struct Workspace {
@@ -42,6 +45,10 @@ impl Workspace {
 
     pub fn overlay_work_dir(&self) -> PathBuf {
         self.root.join(OVERLAY).join(WORK)
+    }
+
+    pub fn cache_dir(&self) -> PathBuf {
+        self.root.join(CACHE)
     }
 
     pub fn mods_dir(&self) -> PathBuf {
@@ -68,6 +75,10 @@ impl Workspace {
         self.game.proton_dir.join("proton")
     }
 
+    pub fn work_dir(&self) -> PathBuf {
+        self.root.clone()
+    }
+
     pub fn new(config: &Config, game_config: &GameConfig) -> anyhow::Result<Self> {
         Ok(Self {
             game: game_config.clone(),
@@ -76,7 +87,10 @@ impl Workspace {
     }
 
     pub fn prepare_file_system(&self) -> anyhow::Result<()> {
-        fs::create_dir_all(self.proton_work_dir())?;
+        for path in [self.cache_dir(), self.proton_work_dir(), self.work_dir()] {
+            fs::create_dir_all(path)?;
+        }
+
         permissions::chown_dir(&self.proton_work_dir(), false)
             .with_context(|| "Could not set proton working dir permissions.")?;
 
@@ -100,11 +114,10 @@ impl Workspace {
         let merged = self.overlay_merged_dir();
         let work = self.overlay_work_dir();
         let active = self.active_dir();
-        let sink = self.sink_dir();
         let overlay_root = self.root.join(OVERLAY);
 
         if overlay_root.exists() {
-            for dir in [&merged, &work, &active, &sink] {
+            for dir in [&merged, &work, &active] {
                 match fs::remove_dir_all(dir) {
                     Ok(_) => {}
                     Err(err) if err.kind() == ErrorKind::NotFound => {}
@@ -116,7 +129,7 @@ impl Workspace {
             }
         }
 
-        for dir in [&merged, &work, &active, &sink] {
+        for dir in [&merged, &work, &active] {
             fs::create_dir_all(dir)
                 .with_context(|| format!("Failed to create {}", dir.display()))?;
         }

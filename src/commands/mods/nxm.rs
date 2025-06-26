@@ -5,6 +5,7 @@ use crate::{
     config::Config,
     mods::manager::Manager,
     sources::nexus::{self, Nexus},
+    types::{FileStatus, ModArchive},
     ui::notify,
 };
 
@@ -21,9 +22,10 @@ impl NxmHandler {
         let game = nexus::from_nexus_domain(domain)?;
         let manager = Manager::new(&game, &config)?;
 
+        let mod_info = Nexus::get_mod_info(&game, &parsed.mod_id).await?;
         let file_info_result =
             Nexus::get_mod_file_info(&game, &parsed.mod_id, &parsed.file_id).await;
-        let file_info = match file_info_result {
+        let mut file_info = match file_info_result {
             Ok(i) => i,
             Err(i) => {
                 notify::send_notification(&format!(
@@ -33,32 +35,35 @@ impl NxmHandler {
                 bail!(i.to_string())
             }
         };
+        file_info.archive_path = manager.get_cache_path();
+        file_info.status = FileStatus::Downloading;
 
-        let mod_info = Nexus::get_mod_info(&game, &parsed.mod_id).await?;
-
-        notify::send_notification(&format!("Starting '{}' download", file_info.file_name))?;
-
-        let staged_archive_path = manager.prepare_staging_download(&mod_info, &file_info)?;
-
-        if staged_archive_path.exists() {
+        if manager.is_archive_present(file_info.file_uid)? {
             notify::send_notification(&format!(
-                "'{}' already downloaded, skipping.",
+                "Archive '{}' is already downloaded.",
                 file_info.file_name
             ))?;
-
             return Ok(());
         }
 
-        let download_link = Nexus::get_download_link(parsed).await?;
-        Nexus::download_file(&download_link, &staged_archive_path).await?;
+        manager.mark_archive_status(&mod_info, &file_info, FileStatus::Downloading)?;
 
-        manager.register_archive(&mod_info, &file_info)?;
+        notify::send_notification(&format!("Starting '{}' download", file_info.file_name))?;
+
+        let download_link = Nexus::get_download_link(&parsed).await?;
+        Nexus::download_file(
+            &download_link,
+            &file_info.archive_path.join(&file_info.file_name),
+        )
+        .await?;
 
         notify::send_notification(&format!(
-            "Downloaded {} to '{}'",
+            "Downloaded complete for '{}'",
             file_info.file_name,
-            staged_archive_path.display()
         ))?;
+
+        manager.mark_archive_status(&mod_info, &file_info, FileStatus::Downloaded)?;
+        manager.stage_archive(mod_info, file_info)?;
 
         Ok(())
     }

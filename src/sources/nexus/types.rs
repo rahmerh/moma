@@ -1,6 +1,8 @@
+use std::path::PathBuf;
+
 use serde::Deserialize;
 
-use crate::types::{InstallationStatus, ModFileInfo, ModInfo};
+use crate::types::{FileStatus, Mod, ModArchive};
 
 // Request structs
 
@@ -39,19 +41,20 @@ pub struct ModInfoResponse {
     pub name: String,
 }
 
-impl From<ModFileInfoResponse> for ModFileInfo {
+impl From<ModFileInfoResponse> for ModArchive {
     fn from(value: ModFileInfoResponse) -> Self {
-        ModFileInfo {
-            uid: value.uid,
+        ModArchive {
+            file_uid: value.uid,
+            archive_path: PathBuf::default(),
             file_name: value.file_name,
-            status: InstallationStatus::Pending,
+            status: FileStatus::Unknown,
         }
     }
 }
 
-impl From<ModInfoResponse> for ModInfo {
+impl From<ModInfoResponse> for Mod {
     fn from(value: ModInfoResponse) -> Self {
-        ModInfo {
+        Mod {
             name: value.name,
             uid: value.uid,
             downloaded_archives: vec![],

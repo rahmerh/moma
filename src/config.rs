@@ -131,7 +131,7 @@ impl Config {
         };
         let parent = path.parent().unwrap();
         std::fs::create_dir_all(parent)?;
-        let toml = toml::to_string_pretty(self).unwrap();
+        let toml = toml::to_string_pretty(self)?;
         std::fs::write(&path, toml)?;
         permissions::chown_dir(&parent, true)
     }

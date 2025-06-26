@@ -7,7 +7,7 @@ use reqwest::Url;
 use crate::{
     games::Game,
     sources::nexus::{client::NexusClient, config::Config, types::DownloadInfoRequest},
-    types::{ModFileInfo, ModInfo},
+    types::{Mod, ModArchive},
     ui::prompt,
 };
 
@@ -17,6 +17,7 @@ mod types;
 
 pub struct Nexus;
 
+#[derive(Clone)]
 pub struct NxmLink {
     pub game: String,
     pub mod_id: String,
@@ -127,13 +128,13 @@ impl Nexus {
         Ok(())
     }
 
-    pub async fn get_mod_info(game: &Game, mod_id: &str) -> anyhow::Result<ModInfo> {
+    pub async fn get_mod_info(game: &Game, mod_id: &str) -> anyhow::Result<Mod> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
 
         let response = client.get_mod_info(game, mod_id).await?;
 
-        let info: ModInfo = response.into();
+        let info: Mod = response.into();
 
         Ok(info)
     }
@@ -142,22 +143,22 @@ impl Nexus {
         game: &Game,
         mod_id: &str,
         file_id: &str,
-    ) -> anyhow::Result<ModFileInfo> {
+    ) -> anyhow::Result<ModArchive> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
 
         let response = client.get_mod_file_info(game, mod_id, file_id).await?;
 
-        let info: ModFileInfo = response.into();
+        let info: ModArchive = response.into();
 
         Ok(info)
     }
 
-    pub async fn get_download_link(nxmlink: NxmLink) -> anyhow::Result<Url> {
+    pub async fn get_download_link(nxmlink: &NxmLink) -> anyhow::Result<Url> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
 
-        let download_info: DownloadInfoRequest = nxmlink.into();
+        let download_info: DownloadInfoRequest = nxmlink.clone().into();
 
         let response = client.get_download_link(download_info).await?;
 

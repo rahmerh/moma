@@ -34,8 +34,8 @@ impl Install {
                 prompt::select_multiple("Select the mods you want to install", &staged_mods)?;
         }
 
-        let mut files_to_install: Vec<PathBuf> = Vec::new();
         for mod_to_install in mods_to_install {
+            let mut files_to_install: Vec<PathBuf> = Vec::new();
             if mod_to_install.downloaded_archives.len() > 1 {
                 let selected_files = prompt::select_multiple(
                     "Select the archives to install",
@@ -44,22 +44,24 @@ impl Install {
 
                 let selected_files = reorder::reorder_items(selected_files)?;
 
-                files_to_install.extend(
-                    selected_files
-                        .iter()
-                        .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
-                );
+                // files_to_install.extend(
+                //     selected_files
+                //         .iter()
+                //         .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
+                // );
             } else {
-                files_to_install.extend(
-                    mod_to_install
-                        .downloaded_archives
-                        .iter()
-                        .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
-                );
+                // files_to_install.extend(
+                //     mod_to_install
+                //         .downloaded_archives
+                //         .iter()
+                //         .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
+                // );
+            }
+
+            for file in files_to_install {
+                manager.install_archive_for_mod(&mod_to_install.name, &file)?;
             }
         }
-
-        manager.install_archive(files_to_install)?;
 
         Ok(())
     }
