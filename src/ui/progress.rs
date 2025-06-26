@@ -1,42 +1,72 @@
-use anyhow::Result;
-use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
-use std::fs::File;
-use std::io::Write;
+use std::collections::VecDeque;
+use std::fs::{self};
 use std::path::Path;
-use tokio::io::AsyncRead;
-use tokio_util::io::ReaderStream;
+use std::thread;
+use std::time::{Duration, Instant};
 
-pub async fn stream_to_file<R>(
-    label: &str,
-    reader: R,
-    output_path: &Path,
-    total_size: u64,
-) -> Result<()>
-where
-    R: AsyncRead + Unpin,
-{
-    let pb = ProgressBar::new(total_size);
+use crate::types::DownloadProgress;
 
-    let template = format!(
-        "{label} {{bar:40.cyan/blue}} {{bytes}}/{{total_bytes}} ({{bytes_per_sec}}, ETA: {{eta}})"
-    );
-    pb.set_style(
-        ProgressStyle::with_template(&template)
-            .unwrap()
-            .progress_chars("=> "),
-    );
+pub fn display_progress_bar(progress_path: &Path) -> anyhow::Result<()> {
+    let pb_style = ProgressStyle::default_bar()
+        .template("{msg} {bar:40.cyan/blue} {bytes}/{total_bytes}")
+        .unwrap()
+        .progress_chars("=> ");
 
-    let mut file = File::create(output_path)?;
-    let mut stream = ReaderStream::new(reader);
+    let pb = ProgressBar::new(100);
 
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk?;
-        file.write_all(&chunk)?;
-        pb.inc(chunk.len() as u64);
+    pb.set_style(pb_style);
+
+    let mut window: VecDeque<(Instant, u64)> = VecDeque::new();
+    loop {
+        let content = match fs::read_to_string(progress_path) {
+            Ok(c) => c,
+            Err(_) => {
+                pb.finish_with_message("Done");
+                break;
+            }
+        };
+
+        let progress: DownloadProgress = match serde_json::from_str(&content) {
+            Ok(p) => p,
+            Err(_) => continue,
+        };
+
+        pb.set_length(progress.total_bytes);
+        pb.set_position(progress.progress_bytes);
+
+        let now = Instant::now();
+        let bytes = progress.progress_bytes;
+        window.push_back((now, bytes));
+
+        // Window of 20 updates, maybe change later
+        if window.len() > 20 {
+            window.pop_front();
+        }
+
+        println!("\nQueue: {}\n", window.len());
+
+        let speed_bps =
+            if let (Some((old_t, old_b)), Some((new_t, new_b))) = (window.front(), window.back()) {
+                let byte_delta = new_b.saturating_sub(*old_b);
+                let time_delta = (*new_t - *old_t).as_secs_f64();
+                if time_delta > 0.0 {
+                    byte_delta as f64 / time_delta
+                } else {
+                    0.0
+                }
+            } else {
+                0.0
+            };
+
+        pb.set_message(format!(
+            "{}\n{:.2} MB/s",
+            progress.file_name,
+            speed_bps / 1_048_576.0
+        ));
+
+        thread::sleep(Duration::from_millis(500));
     }
-
-    pb.finish_with_message("Done");
 
     Ok(())
 }

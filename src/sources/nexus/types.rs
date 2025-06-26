@@ -57,7 +57,7 @@ impl From<ModInfoResponse> for Mod {
         Mod {
             name: value.name,
             uid: value.uid,
-            downloaded_archives: vec![],
+            archives: vec![],
         }
     }
 }

@@ -27,7 +27,7 @@ impl ListStaged {
 
             println!("{}", "Downloaded archives:".indent_spaces(4).bold());
 
-            for file in staged.downloaded_archives {
+            for file in staged.archives {
                 print!("{}", "➤".indent_spaces(4));
                 print!(" {}\n", file.file_name);
                 println!(

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Mod {
     pub uid: u64,
     pub name: String,
-    pub downloaded_archives: Vec<ModArchive>,
+    pub archives: Vec<ModArchive>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -30,6 +30,15 @@ pub enum FileStatus {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModList {
     pub mods: Vec<Mod>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DownloadProgress {
+    pub file_name: String,
+    pub progress_bytes: u64,
+    pub total_bytes: u64,
+    pub started_at: u64,
+    pub updated_at: u64,
 }
 
 impl Display for ModArchive {

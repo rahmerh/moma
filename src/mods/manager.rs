@@ -60,7 +60,7 @@ impl Manager {
         let mod_list = self.read_mod_list()?;
 
         let present = mod_list.mods.iter().any(|m| {
-            m.downloaded_archives
+            m.archives
                 .iter()
                 .any(|a| a.file_uid == file_uid && a.status != FileStatus::Downloading)
         });
@@ -78,7 +78,7 @@ impl Manager {
 
         if let Some(existing_mod) = mod_list.mods.iter_mut().find(|m| m.uid == mod_info.uid) {
             if let Some(existing_archive) = existing_mod
-                .downloaded_archives
+                .archives
                 .iter_mut()
                 .find(|a| a.file_uid == archive.file_uid)
             {
@@ -86,7 +86,7 @@ impl Manager {
             } else {
                 let mut new_archive = archive.clone();
                 new_archive.status = status;
-                existing_mod.downloaded_archives.push(new_archive);
+                existing_mod.archives.push(new_archive);
             }
         } else {
             let mut new_archive = archive.clone();
@@ -95,7 +95,7 @@ impl Manager {
             let new_mod = Mod {
                 uid: mod_info.uid,
                 name: mod_info.name.clone(),
-                downloaded_archives: vec![new_archive],
+                archives: vec![new_archive],
             };
 
             mod_list.mods.push(new_mod);
