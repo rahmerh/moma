@@ -5,7 +5,7 @@ use crate::{
     config::Config,
     mods::manager::Manager,
     sources::nexus::{self, Nexus},
-    types::{FileStatus, ModArchive},
+    types::FileStatus,
     ui::notify,
 };
 
@@ -38,11 +38,25 @@ impl NxmHandler {
         file_info.archive_path = manager.get_cache_path();
         file_info.status = FileStatus::Downloading;
 
-        if manager.is_archive_present(file_info.file_uid)? {
-            notify::send_notification(&format!(
-                "Archive '{}' is already downloaded.",
-                file_info.file_name
-            ))?;
+        let current_archive_status =
+            manager.get_archive_status(mod_info.uid, file_info.file_uid)?;
+
+        if current_archive_status != FileStatus::Unknown {
+            let message = match current_archive_status {
+                FileStatus::Unknown => "",
+                FileStatus::Downloading => &format!(
+                    "There is already a download in progress for '{}'.",
+                    file_info.file_name
+                ),
+                FileStatus::Downloaded => {
+                    &format!("'{}' is already downloaded.", file_info.file_name)
+                }
+                FileStatus::Installed => {
+                    &format!("'{}' is already installed.", file_info.file_name)
+                }
+                FileStatus::Error => "",
+            };
+            notify::send_notification(&message)?;
             return Ok(());
         }
 

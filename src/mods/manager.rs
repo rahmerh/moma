@@ -36,36 +36,17 @@ impl Manager {
         self.workspace.cache_dir()
     }
 
-    pub fn get_staged_mod_infos(&self) -> anyhow::Result<Vec<Mod>> {
-        let mut mods = Vec::new();
-
-        for entry in fs::read_dir(self.workspace.staging_dir())? {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.is_dir() {
-                let info_path = path.join(MOD_INFO_FILE);
-                if info_path.exists() {
-                    let file = fs::File::open(info_path)?;
-                    let mod_info: Mod = serde_json::from_reader(file)?;
-                    mods.push(mod_info);
-                }
-            }
-        }
-
-        Ok(mods)
-    }
-
-    pub fn is_archive_present(&self, file_uid: u64) -> anyhow::Result<bool> {
+    pub fn get_archive_status(&self, mod_uid: u64, file_uid: u64) -> anyhow::Result<FileStatus> {
         let mod_list = self.read_mod_list()?;
 
-        let present = mod_list.mods.iter().any(|m| {
-            m.archives
-                .iter()
-                .any(|a| a.file_uid == file_uid && a.status != FileStatus::Downloading)
-        });
+        let status = mod_list
+            .mods
+            .iter()
+            .find(|m| m.uid == mod_uid)
+            .and_then(|m| m.archives.iter().find(|a| a.file_uid == file_uid))
+            .map(|a| a.status);
 
-        Ok(present)
+        Ok(status.unwrap_or(FileStatus::Unknown))
     }
 
     pub fn mark_archive_status(

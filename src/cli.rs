@@ -11,6 +11,7 @@ use crate::{
         supported::Supported,
     },
     config::Config,
+    ui::print::Colorize,
     utils::state,
 };
 
@@ -63,7 +64,12 @@ pub enum ModsCommand {
 impl Cli {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         if let Some(game) = state::current_context()? {
-            println!("{}{}{}", "[".cyan(), game.to_string().bold(), "]".cyan());
+            println!(
+                "{}{}{}",
+                "[".dark_cyan(),
+                game.to_string().bold(),
+                "]".dark_cyan()
+            );
         }
 
         match &self.command {

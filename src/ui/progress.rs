@@ -44,8 +44,6 @@ pub fn display_progress_bar(progress_path: &Path) -> anyhow::Result<()> {
             window.pop_front();
         }
 
-        println!("\nQueue: {}\n", window.len());
-
         let speed_bps =
             if let (Some((old_t, old_b)), Some((new_t, new_b))) = (window.front(), window.back()) {
                 let byte_delta = new_b.saturating_sub(*old_b);
