@@ -1,7 +1,7 @@
 use std::{
     fs::{self},
     io::ErrorKind,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use anyhow::Context;
@@ -87,14 +87,23 @@ impl Workspace {
     }
 
     pub fn prepare_file_system(&self) -> anyhow::Result<()> {
-        for path in [self.cache_dir(), self.proton_work_dir(), self.work_dir()] {
-            fs::create_dir_all(path)?;
+        let mut paths = vec![
+            self.cache_dir(),
+            self.proton_work_dir(),
+            self.overlay_merged_dir(),
+            self.overlay_work_dir(),
+            self.active_dir(),
+            self.sink_dir(),
+        ];
+
+        paths.sort_by_key(|p| p.components().count());
+
+        for path in paths {
+            Self::reset_dir(&path)?;
         }
 
-        permissions::chown_dir(&self.proton_work_dir(), false)
-            .with_context(|| "Could not set proton working dir permissions.")?;
-
-        self.reset_overlay_dirs()?;
+        permissions::chown_dir(&self.work_dir(), true)
+            .with_context(|| "Could not set working dir permissions.")?;
 
         Ok(())
     }
@@ -110,29 +119,16 @@ impl Workspace {
             .is_none())
     }
 
-    fn reset_overlay_dirs(&self) -> anyhow::Result<()> {
-        let merged = self.overlay_merged_dir();
-        let work = self.overlay_work_dir();
-        let active = self.active_dir();
-        let overlay_root = self.root.join(OVERLAY);
+    fn reset_dir(path: &Path) -> anyhow::Result<()> {
+        log::debug!("Resetting: {}", path.display());
 
-        if overlay_root.exists() {
-            for dir in [&merged, &work, &active] {
-                match fs::remove_dir_all(dir) {
-                    Ok(_) => {}
-                    Err(err) if err.kind() == ErrorKind::NotFound => {}
-                    Err(err) => {
-                        return Err(err)
-                            .with_context(|| format!("Failed to remove {}", dir.display()));
-                    }
-                }
-            }
+        if path.exists() {
+            fs::remove_dir_all(path)
+                .with_context(|| format!("Failed to delete '{}'", path.display()))?;
         }
 
-        for dir in [&merged, &work, &active] {
-            fs::create_dir_all(dir)
-                .with_context(|| format!("Failed to create {}", dir.display()))?;
-        }
+        fs::create_dir_all(path)
+            .with_context(|| format!("Failed to create '{}'", path.display()))?;
 
         Ok(())
     }

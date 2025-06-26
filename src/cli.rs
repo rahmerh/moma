@@ -40,10 +40,7 @@ pub enum Command {
     Connect(Connect),
     #[command(about = "Sets the current active game context")]
     Context(Context),
-    #[command(
-        name = "nxm",
-        about = "Handles the nxm link. To be used in combination with the nxm handler set up by the connect command."
-    )]
+    #[command(name = "nxm", hide = true)]
     NxmHandler(NxmHandler),
     #[command(subcommand, name = "mod", about = "All commands to manage mods with")]
     Mods(ModsCommand),
