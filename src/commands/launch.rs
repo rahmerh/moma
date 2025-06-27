@@ -43,7 +43,7 @@ impl Launch {
 
         let game = match self.game {
             Some(ref game) => game.clone(),
-            None => state::current_context()?.ok_or_else(|| {
+            None => state::current_context(&config.state_file)?.ok_or_else(|| {
                 anyhow::anyhow!(
                     "No game specified and no context is set. (Try: '{}')",
                     usage_for!(Cli::CONTEXT)

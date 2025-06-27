@@ -5,7 +5,7 @@ use strum_macros::EnumIter;
 
 pub mod nexus;
 
-#[derive(clap::ValueEnum, Debug, Clone, Serialize, Deserialize, EnumIter)]
+#[derive(clap::ValueEnum, Clone, Serialize, Deserialize, EnumIter)]
 pub enum Source {
     Nexus,
 }

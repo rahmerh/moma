@@ -12,7 +12,7 @@ This means:
 
 - **No pollution of your game folder**
 - **Seperated mod folders for easy maintenance**
-- **No need to run mod manager through Wine ever again**
+- **No need to run a mod manager through Wine ever again**
 
 Moma is linux first, it skips all the Windows-based junk and uses native linux tools. Built for terminal users who want control without spending hours setting everything up manually.
 
@@ -20,13 +20,9 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 
 ## Features
 
-## Features
-
-- **Instant setup** – Automatically prepares your modding environment and config folders.
-- **Multi-game support** – Seamlessly switch between modded games without cross-contamination.
-- **Clean modded launching** – Keep your base game untouched with isolated mod layers.
-- **Mod platform integration** – Connect to sources like Nexus Mods with secure API key handling.
-- **Interactive mod manager** – Browse, order, and install mods through a TUI interface.
+- **One-command setup** – Automatically prepares your modding environment and config folders.
+- **Clean modded game launching** – Keep your base game untouched with isolated mod layers.
+- **Mod source integration** – Connect to sources like Nexus Mods with secure API key handling.
 - **Live download tracking** – Monitor active downloads with real-time progress and status.
 
 ## Installation
@@ -88,10 +84,9 @@ Stored in `/tmp/moma_state`, resets on reboot or when changed manually.
 ## Roadmap
 
 ### In progress
-NXM link handler (Nexus download URLs)
+(Unit) tests
 
 ### Planned
-- (Unit) tests
 - Persist, warn and handle sink directory (mod config files/runtime writes)
 - Automatic read and validation of extracted mod archives
 - Standardized prints and workflows
