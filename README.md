@@ -82,6 +82,7 @@ NXM link handler (Nexus download URLs)
 ### Planned
 - (Unit) tests
 - Persist, warn and handle sink directory (mod config files/runtime writes)
+- Automatic read and validation of extracted mod archives
 - Standardized prints and workflows
 - TUI
 - Load order management 
