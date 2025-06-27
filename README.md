@@ -20,8 +20,14 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 
 ## Features
 
-- Automatic game setup, including modding tools (`moma init`)
-- Launch games with layered mod folders (`moma launch`)
+## 🔧 Features
+
+- **Instant setup** – Automatically prepares your modding environment and config folders.
+- **Multi-game support** – Seamlessly switch between modded games without cross-contamination.
+- **Clean modded launching** – Keep your base game untouched with isolated mod layers.
+- **Mod platform integration** – Connect to sources like Nexus Mods with secure API key handling.
+- **Interactive mod manager** – Browse, order, and install mods through a TUI interface.
+- **Live download tracking** – Monitor active downloads with real-time progress and status.
 
 ## Installation
 
@@ -50,7 +56,7 @@ Moma only supports certain games (and game versions), game platforms and mod sou
 
 ### Supported game platforms
 
-- Steam (Proton or native)
+- Steam
 
 ### Supported mod sources
 
@@ -59,9 +65,14 @@ Moma only supports certain games (and game versions), game platforms and mod sou
 ## Usage
 
 ```sh
-moma init                 # Initializes moma's folder and sets up your game(s)
-moma context <game>       # Set active game
-sudo moma launch <game>   # Start game
+moma init                 # Initializes moma's folders and sets up your game(s)
+moma context <game>       # Set active game context
+sudo moma launch <game>   # Start game with your mods
+
+moma connect <source>     # Connects to the mod source, prompting and storing API keys if required
+
+moma mod install          # Opens a menu to install downloaded mods into your game
+moma mod downloads        # Displays all active downloads and progress
 ```
 
 ## Game Context
@@ -94,6 +105,22 @@ NXM link handler (Nexus download URLs)
 - Websocket server for download (or others) progress
 - Live mounted preview (to show overrides and metadata)
 - Load order validation and sorting
+
+## Releases
+These aren't proper releases, more so milestones I feel comfortable pushing to main.
+
+### 0.4.0
+- Mod source "connection" setup with `moma connect <source>`
+- Mod downloads/installation management with `moma mod downloads/install`
+
+### 0.3.0
+- Automated install with make
+
+### 0.2.0
+- Overlay mount and game launch with `sudo moma launch`
+
+### 0.1.0
+- Automatic game setup with `moma init`
 
 ## Motivation
 
