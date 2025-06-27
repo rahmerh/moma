@@ -7,7 +7,7 @@ use crate::{
     games::workspace::Workspace,
     mods::mod_list_store::ModListStore,
     types::{FileStatus, Mod},
-    ui::prompt,
+    ui::{prompt, reorder},
     utils::state,
 };
 
@@ -40,7 +40,7 @@ impl Install {
         for mod_entry in mods_with_downloaded_archives {
             let name = mod_entry.name.to_string();
             println!(
-                "\n{}: '{}'\n",
+                "\n{}: '{}'",
                 "Installing archives for".cyan().bold(),
                 name.bold()
             );
@@ -52,9 +52,32 @@ impl Install {
                     &mod_entry.archives,
                 )?;
 
-                archives_to_install.extend(selection);
+                println!(
+                    "\nPlease order the archives, each archive overwrites the archive below it.\n"
+                );
+
+                let ordered = reorder::reorder_items(selection)?;
+
+                archives_to_install.extend(ordered);
             } else {
                 archives_to_install.extend(mod_entry.archives.clone());
+            }
+
+            println!(
+                "About to install the following archives: \n\n{}",
+                archives_to_install
+                    .iter()
+                    .enumerate()
+                    .map(|(i, a)| format!("{}. {}", i + 1, a.file_name))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            );
+
+            println!();
+            let confirmed = prompt::confirm("Do you want to install?")?;
+
+            if !confirmed {
+                continue;
             }
 
             for archive in archives_to_install {

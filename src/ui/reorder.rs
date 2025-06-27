@@ -107,16 +107,6 @@ pub fn reorder_items<T: Display + Clone>(mut items: Vec<T>) -> anyhow::Result<Ve
 
     terminal::disable_raw_mode()?;
 
-    println!(
-        "{}: {}",
-        "Final list order".bold().cyan(),
-        items
-            .iter()
-            .map(|item| item.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
-    );
-
     Ok(items)
 }
 

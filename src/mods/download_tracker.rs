@@ -23,7 +23,7 @@ impl DownloadTracker {
         }
     }
 
-    pub fn reset_stuck_downloads(&self) -> anyhow::Result<Vec<String>> {
+    pub fn reset_stuck_downloads(&self) -> anyhow::Result<usize> {
         let mut mod_list = self.mod_list_store.read()?;
         let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
         let mut cancelled_files = Vec::new();
@@ -76,7 +76,7 @@ impl DownloadTracker {
             }
         }
 
-        Ok(cancelled_files)
+        Ok(cancelled_files.len())
     }
 
     pub fn ensure_tracking_file(&self, file_uid: u64) -> anyhow::Result<PathBuf> {

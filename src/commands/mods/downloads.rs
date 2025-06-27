@@ -23,9 +23,14 @@ impl Downloads {
         let mod_list_store = ModListStore::new(workspace.clone());
         let tracker = DownloadTracker::new(workspace, mod_list_store);
 
-        let _ = tracker.reset_stuck_downloads()?;
+        let reset = tracker.reset_stuck_downloads()?;
 
-        // println!("Cancelled stale downloads: {}", reset_downloads.join(", "));
+        if reset > 0 {
+            println!(
+                "Info: cancelled {} stuck downloads. If this happens frequently please open an issue in github.",
+                reset
+            );
+        }
 
         // let mod_list = manager.mod_list()?;
         //

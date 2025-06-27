@@ -87,7 +87,7 @@ impl NxmHandler {
         file_info.archive_path = Some(archive_path.clone());
         mod_list_store.add_archive(&mod_info, file_info.clone())?;
 
-        notify::send_notification(&format!("Starting '{}' download", file_info.file_name))?;
+        notify::send_notification(&format!("Starting download for '{}'", file_info.file_name))?;
 
         let tracking_file = download_tracker
             .ensure_tracking_file(file_info.file_uid)
