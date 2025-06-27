@@ -1,5 +1,6 @@
 use std::{env, ffi::CString, fs, os::unix::ffi::OsStrExt, path::Path};
 
+use anyhow::Context;
 use libc::{chown, getuid, gid_t, uid_t};
 
 pub fn is_process_root() -> bool {
@@ -47,20 +48,23 @@ pub fn chown_dir(dir: &Path, recursive: bool) -> anyhow::Result<()> {
         .unwrap_or_else(|| unsafe { libc::getgid() });
 
     if recursive {
-        for entry in fs::read_dir(dir)? {
+        for entry in
+            fs::read_dir(dir).with_context(|| format!("Failed to read dir: {}", dir.display()))?
+        {
             let entry = entry?;
             let path = entry.path();
 
             if path.is_dir() {
-                chown_dir(&path, true)?;
+                chown_dir(&path, true)
+                    .with_context(|| format!("Failed to recurse into dir: {}", path.display()))?;
             }
 
-            chown_path(&path, uid, gid)?;
+            chown_path(&path, uid, gid)
+                .with_context(|| format!("Failed to chown: {}", path.display()))?;
         }
     }
 
-    chown_path(dir, uid, gid)?;
-    Ok(())
+    chown_path(dir, uid, gid)
 }
 
 fn chown_path(path: &Path, uid: uid_t, gid: gid_t) -> anyhow::Result<()> {

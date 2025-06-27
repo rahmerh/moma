@@ -6,7 +6,8 @@ use strum::IntoEnumIterator;
 
 use crate::{
     config::{Config, GameConfig},
-    games::Game,
+    games::{Game, workspace::Workspace},
+    mods::env_store::EnvStore,
     sources::Source,
     ui::{prompt, reorder},
 };
@@ -77,6 +78,13 @@ impl Init {
 
         config.games.insert(game.id().to_string(), game_config);
         config.save()?;
+
+        let workspace = Workspace::new(&game, config)?;
+        workspace.prepare_file_system()?;
+        let env_store = EnvStore::new(workspace);
+        env_store
+            .store_env_vars(std::env::vars().collect())
+            .with_context(|| "Could not store user's env vars.")?;
 
         println!(
             "{}",

@@ -1,12 +1,13 @@
-use std::path::{Path, PathBuf};
-
 use anyhow::bail;
 use clap::Args;
+use crossterm::style::Stylize;
 
 use crate::{
     config::Config,
-    mods::manager::Manager,
-    ui::{progress, prompt, reorder},
+    games::workspace::Workspace,
+    mods::mod_list_store::ModListStore,
+    types::{FileStatus, Mod},
+    ui::prompt,
     utils::state,
 };
 
@@ -18,54 +19,49 @@ pub struct Install {
 
 impl Install {
     pub fn run(&self, config: &Config) -> anyhow::Result<()> {
-        progress::display_progress_bar(PathBuf::from("/tmp/hoi.json").as_path());
+        let current_game = match state::current_context()? {
+            Some(game) => game,
+            None => bail!("No game context set, please run 'moma context' first."),
+        };
+
+        let workspace = Workspace::new(&current_game, config)?;
+        let mod_list_store = ModListStore::new(workspace);
+        let mod_list = mod_list_store.read()?;
+
+        let mods_with_downloaded_archives: Vec<Mod> = mod_list
+            .mods
+            .into_iter()
+            .filter_map(|mut m| {
+                m.archives.retain(|a| a.status == FileStatus::Downloaded);
+                if m.archives.is_empty() { None } else { Some(m) }
+            })
+            .collect();
+
+        for mod_entry in mods_with_downloaded_archives {
+            let name = mod_entry.name.to_string();
+            println!(
+                "\n{}: '{}'\n",
+                "Installing archives for".cyan().bold(),
+                name.bold()
+            );
+
+            let mut archives_to_install = Vec::new();
+            if mod_entry.archives.len() > 1 {
+                let selection = prompt::select_multiple(
+                    "Select one or more archives to install.",
+                    &mod_entry.archives,
+                )?;
+
+                archives_to_install.extend(selection);
+            } else {
+                archives_to_install.extend(mod_entry.archives.clone());
+            }
+
+            for archive in archives_to_install {
+                mod_list_store.install_archive(&mod_entry, &archive)?;
+            }
+        }
 
         Ok(())
-        // let current_game = match state::current_context()? {
-        //     Some(game) => game,
-        //     None => bail!("No game context set, please run 'moma context' first."),
-        // };
-        //
-        // let manager = Manager::new(&current_game, config)?;
-        // let staged_mods = manager.get_staged_mod_infos()?;
-        //
-        // let mods_to_install;
-        // if self.all {
-        //     mods_to_install = staged_mods;
-        // } else {
-        //     mods_to_install =
-        //         prompt::select_multiple("Select the mods you want to install", &staged_mods)?;
-        // }
-        //
-        // for mod_to_install in mods_to_install {
-        //     let mut files_to_install: Vec<PathBuf> = Vec::new();
-        //     if mod_to_install.archives.len() > 1 {
-        //         let selected_files = prompt::select_multiple(
-        //             "Select the archives to install",
-        //             &mod_to_install.archives,
-        //         )?;
-        //
-        //         let selected_files = reorder::reorder_items(selected_files)?;
-        //
-        //         // files_to_install.extend(
-        //         //     selected_files
-        //         //         .iter()
-        //         //         .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
-        //         // );
-        //     } else {
-        //         // files_to_install.extend(
-        //         //     mod_to_install
-        //         //         .downloaded_archives
-        //         //         .iter()
-        //         //         .map(|f| manager.get_staged_archive_path(&mod_to_install, &f.file_name)),
-        //         // );
-        //     }
-        //
-        //     for file in files_to_install {
-        //         manager.install_archive_for_mod(&mod_to_install.name, &file)?;
-        //     }
-        // }
-        //
-        // Ok(())
     }
 }

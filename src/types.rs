@@ -13,18 +13,18 @@ pub struct Mod {
 pub struct ModArchive {
     pub file_uid: u64,
     pub file_name: String,
-    pub archive_path: PathBuf,
+    pub archive_path: Option<PathBuf>,
     pub status: FileStatus,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum FileStatus {
     Unknown,
     Downloading,
     Downloaded,
     Installed,
-    Error,
+    Failed(String),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -60,7 +60,7 @@ impl Display for FileStatus {
             FileStatus::Downloading => "Downloading",
             FileStatus::Downloaded => "Downloaded",
             FileStatus::Installed => "Installed",
-            FileStatus::Error => "Something went wrong",
+            FileStatus::Failed(str) => &format!("A problem occurred: '{}'", str),
         };
 
         write!(f, "{}", message)

@@ -45,7 +45,7 @@ impl From<ModFileInfoResponse> for ModArchive {
     fn from(value: ModFileInfoResponse) -> Self {
         ModArchive {
             file_uid: value.uid,
-            archive_path: PathBuf::default(),
+            archive_path: None,
             file_name: value.file_name,
             status: FileStatus::Unknown,
         }

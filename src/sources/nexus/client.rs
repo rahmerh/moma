@@ -145,7 +145,12 @@ impl NexusClient {
         Ok(file_info)
     }
 
-    pub async fn download_file(&self, url: &Url, output_file: &PathBuf) -> anyhow::Result<()> {
+    pub async fn download_file(
+        &self,
+        url: &Url,
+        output_file: &PathBuf,
+        tracking_file: &PathBuf,
+    ) -> anyhow::Result<()> {
         let res = self.client.get(url.clone()).send().await?;
         let total_size = res.content_length().unwrap_or(0);
 
@@ -158,7 +163,7 @@ impl NexusClient {
             stream,
             &output_file,
             total_size,
-            PathBuf::from("/tmp/hoi.json").as_path(),
+            tracking_file.as_path(),
             output_file.file_name().unwrap().display().to_string(),
         )
         .await
@@ -199,9 +204,7 @@ impl NexusClient {
                     updated_at,
                 };
 
-                let tmp_path = progress_file.with_extension("tmp");
-                fs::write(&tmp_path, serde_json::to_string_pretty(&progress)?)?;
-                fs::rename(tmp_path, progress_file)?;
+                fs::write(progress_file, serde_json::to_string_pretty(&progress)?)?;
                 last_written = Instant::now();
             }
         }

@@ -65,6 +65,7 @@ pub fn select<T: Display + Clone>(prompt: &str, options: &[T]) -> anyhow::Result
 
     let index = Select::with_theme(&theme)
         .items(options)
+        .report(false)
         .default(0)
         .interact()?;
 
@@ -95,6 +96,7 @@ pub fn select_path(prompt: &str, entries: Vec<PathBuf>) -> anyhow::Result<PathBu
 
     let index = Select::with_theme(&theme)
         .items(&labels)
+        .report(false)
         .default(0)
         .interact()?;
 
@@ -114,6 +116,7 @@ pub fn select_multiple<T: Display + Clone>(prompt: &str, options: &[T]) -> anyho
         let selection = MultiSelect::with_theme(&theme)
             .with_prompt(prompt)
             .items(&labels)
+            .report(false)
             .interact()?;
 
         if selection.is_empty() {
@@ -149,7 +152,7 @@ pub fn input(prompt: &str, allow_empty: bool) -> anyhow::Result<String> {
 }
 
 /// Clears lines from the cursor's position upwards. Will skip x amount before erasing lines if skip > 0 given.
-fn clear_previous_lines(amount: u16, skip: u16) -> std::io::Result<()> {
+pub fn clear_previous_lines(amount: u16, skip: u16) -> std::io::Result<()> {
     let mut stdout = stdout();
 
     if skip > 0 {

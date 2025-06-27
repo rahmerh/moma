@@ -3,7 +3,7 @@ use std::fs::{self, File};
 use anyhow::{Context, anyhow, bail};
 use serde::{Deserialize, Serialize};
 
-use crate::{config, utils::os::permissions};
+use crate::{cli::Cli, config, usage_for, utils::os::permissions};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -21,7 +21,10 @@ impl Config {
             .ok_or_else(|| anyhow!("Failed to resolve config path"))?;
 
         if !config_file_path.exists() {
-            bail!("Nexus config could not be found, did you run 'moma connect nexus'?");
+            bail!(
+                "Nexus config could not be found, did you run '{}'?",
+                usage_for!(Cli::CONNECT)
+            );
         }
 
         let contents = fs::read_to_string(&config_file_path)

@@ -6,6 +6,7 @@ mod mods;
 mod sources;
 mod types;
 mod ui;
+#[macro_use]
 mod utils;
 
 use clap::Parser;

@@ -1,13 +1,13 @@
 use std::{
     fs::{self},
-    io::ErrorKind,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use anyhow::Context;
 
 use crate::{
     config::{Config, GameConfig},
+    games::Game,
     utils::os::permissions,
 };
 
@@ -20,12 +20,14 @@ const MODS: &str = "mods";
 const STAGING: &str = "staging";
 const SINK: &str = "sink";
 const PROTON: &str = "proton";
+const TRACKING: &str = "tracking";
 
 pub const ARCHIVES: &str = "archives";
 
 pub const MOD_LIST_FILE: &str = "mod-list.json";
 
 /// Represents the game-specific working directory structure
+#[derive(Clone)]
 pub struct Workspace {
     /// The user-defined configuration for this game (install path, Proton version, etc.)
     game: GameConfig,
@@ -39,12 +41,20 @@ impl Workspace {
         self.root.join(ACTIVE)
     }
 
+    pub fn tracking_dir(&self) -> PathBuf {
+        self.cache_dir().join(TRACKING)
+    }
+
+    pub fn overlay_dir(&self) -> PathBuf {
+        self.root.join(OVERLAY)
+    }
+
     pub fn overlay_merged_dir(&self) -> PathBuf {
-        self.root.join(OVERLAY).join(MERGED)
+        self.overlay_dir().join(MERGED)
     }
 
     pub fn overlay_work_dir(&self) -> PathBuf {
-        self.root.join(OVERLAY).join(WORK)
+        self.overlay_dir().join(WORK)
     }
 
     pub fn cache_dir(&self) -> PathBuf {
@@ -79,7 +89,11 @@ impl Workspace {
         self.root.clone()
     }
 
-    pub fn new(config: &Config, game_config: &GameConfig) -> anyhow::Result<Self> {
+    pub fn new(game: &Game, config: &Config) -> anyhow::Result<Self> {
+        let game_config = config.games.get(game.id()).ok_or_else(|| {
+            anyhow::anyhow!("No configuration found for game {}", game.to_string())
+        })?;
+
         Ok(Self {
             game: game_config.clone(),
             root: config.work_dir.join(&game_config.name),
@@ -87,48 +101,30 @@ impl Workspace {
     }
 
     pub fn prepare_file_system(&self) -> anyhow::Result<()> {
-        let mut paths = vec![
-            self.cache_dir(),
+        // These folders can't be made by a root process, which could happen if someone ran moma launch before init.
+        if permissions::is_process_root() {
+            return Ok(());
+        }
+
+        let paths = vec![
             self.proton_work_dir(),
             self.overlay_merged_dir(),
             self.overlay_work_dir(),
             self.active_dir(),
+            self.tracking_dir(),
             self.sink_dir(),
+            self.mods_dir(),
         ];
 
-        paths.sort_by_key(|p| p.components().count());
-
         for path in paths {
-            Self::reset_dir(&path)?;
+            fs::create_dir_all(&path)
+                .with_context(|| format!("Failed to create '{}'", path.display()))?;
         }
 
-        permissions::chown_dir(&self.work_dir(), true)
-            .with_context(|| "Could not set working dir permissions.")?;
-
-        Ok(())
-    }
-
-    pub fn validate_sink_is_empty(&self) -> anyhow::Result<bool> {
-        let path = self.sink_dir();
-        if !path.exists() {
-            return Ok(true);
-        }
-        Ok(fs::read_dir(path)
-            .with_context(|| "Sink dir could not be found.")?
-            .next()
-            .is_none())
-    }
-
-    fn reset_dir(path: &Path) -> anyhow::Result<()> {
-        log::debug!("Resetting: {}", path.display());
-
-        if path.exists() {
-            fs::remove_dir_all(path)
-                .with_context(|| format!("Failed to delete '{}'", path.display()))?;
-        }
-
-        fs::create_dir_all(path)
-            .with_context(|| format!("Failed to create '{}'", path.display()))?;
+        permissions::chown_dir(&self.overlay_dir(), false)?;
+        permissions::chown_dir(&self.proton_work_dir(), false)?;
+        permissions::chown_dir(&self.active_dir(), true)?;
+        permissions::chown_dir(&self.sink_dir(), true)?;
 
         Ok(())
     }

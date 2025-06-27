@@ -8,7 +8,7 @@ use crate::{
     games::Game,
     sources::nexus::{client::NexusClient, config::Config, types::DownloadInfoRequest},
     types::{Mod, ModArchive},
-    ui::prompt,
+    ui::{self, prompt},
 };
 
 mod client;
@@ -64,6 +64,7 @@ impl Nexus {
         );
 
         let _ = prompt::input("Press Enter to begin", true)?;
+        prompt::clear_previous_lines(1, 0)?;
 
         Command::new("xdg-open")
             .arg("https://www.nexusmods.com/users/myaccount?tab=api")
@@ -165,11 +166,15 @@ impl Nexus {
         Ok(Url::parse(&response.uri)?)
     }
 
-    pub async fn download_file(url: &Url, output_file: &PathBuf) -> anyhow::Result<()> {
+    pub async fn download_file(
+        url: &Url,
+        output_file: &PathBuf,
+        tracking_file: &PathBuf,
+    ) -> anyhow::Result<()> {
         let config = Config::load()?;
         let client = NexusClient::new(&config)?;
 
-        client.download_file(url, &output_file).await
+        client.download_file(url, &output_file, tracking_file).await
     }
 
     pub fn parse_nxm_url(link: &str) -> anyhow::Result<NxmLink> {

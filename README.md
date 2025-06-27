@@ -62,7 +62,6 @@ Moma only supports certain games (and game versions), game platforms and mod sou
 moma init                 # Initializes moma's folder and sets up your game(s)
 moma context <game>       # Set active game
 sudo moma launch <game>   # Start game
-moma supported            # Lists supported game keys to be used in commands listed above
 ```
 
 ## Game Context
@@ -82,7 +81,7 @@ NXM link handler (Nexus download URLs)
 
 ### Planned
 - (Unit) tests
-- Persist sink directory (mod config files/runtime writes)
+- Persist, warn and handle sink directory (mod config files/runtime writes)
 - Standardized prints and workflows
 - TUI
 - Load order management 

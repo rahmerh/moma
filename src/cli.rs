@@ -1,3 +1,4 @@
+use anyhow::bail;
 use clap::{Parser, Subcommand};
 use owo_colors::OwoColorize;
 
@@ -7,19 +8,19 @@ use crate::{
         context::Context,
         init::Init,
         launch::Launch,
-        mods::{install::Install, list_staged::ListStaged, nxm::NxmHandler},
-        supported::Supported,
+        mods::{downloads::Downloads, install::Install, nxm::NxmHandler},
     },
     config::Config,
     ui::print::Colorize,
+    usage_for,
     utils::state,
 };
 
 #[derive(Parser)]
 #[command(
-    name = "moma",
+    name = Cli::MOMA,
     version,
-    about = "Declarative mod manager that automates game- and mod setup"
+    about = "The layered mod manager that automates game- and mod setup"
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -28,39 +29,44 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
-    #[command(about = "Start Moma game setup wizard")]
+    #[command(name = Cli::INIT, about = "Start Moma game setup wizard")]
     Init(Init),
-    #[command(
-        about = "Launch game with configuration. For a list of supported games, run `moma supported`."
-    )]
+    #[command(name = Cli::LAUNCH, about = "Launch game with configuration.")]
     Launch(Launch),
-    #[command(about = "Lists all currently supported games")]
-    Supported(Supported),
-    #[command(about = "Automatically connect to your desired mod platforms for downloads")]
+    #[command(name = Cli::CONNECT, about = "Automatically connect to your desired mod platforms for downloads")]
     Connect(Connect),
-    #[command(about = "Sets the current active game context")]
+    #[command(name= Cli::CONTEXT, about = "Sets the current active game context")]
     Context(Context),
-    #[command(name = "nxm", hide = true)]
+    #[command(name = Cli::NXM, hide = true)]
     NxmHandler(NxmHandler),
-    #[command(subcommand, name = "mod", about = "All commands to manage mods with")]
+    #[command(subcommand, name = Cli::MOD, about = "All commands to manage mods with")]
     Mods(ModsCommand),
 }
 
 #[derive(Subcommand)]
 pub enum ModsCommand {
-    #[command(
-        name = "list-staged",
-        visible_alias = "ls",
-        about = "Lists all currently staged mods. An active game context is required."
-    )]
-    ListStaged(ListStaged),
-    #[command(about = "Installs mods from your staging directory.")]
+    #[command(name = Cli::MOD_DOWNLOADS, about = "Displays status of all downloads")]
+    Downloads(Downloads),
+    #[command(name = Cli::MOD_INSTALL, about = "Installs mods from your staging directory.")]
     Install(Install),
 }
 
 impl Cli {
+    pub const MOMA: &str = "moma";
+
+    pub const INIT: &str = "init";
+    pub const LAUNCH: &str = "launch";
+    pub const CONNECT: &str = "connect";
+    pub const CONTEXT: &str = "context";
+    pub const NXM: &str = "nxm";
+    pub const MOD: &str = "mod";
+
+    pub const MOD_DOWNLOADS: &str = "downloads";
+    pub const MOD_INSTALL: &str = "install";
+
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
-        if let Some(game) = state::current_context()? {
+        let current_context = state::current_context()?;
+        if let Some(game) = &current_context {
             println!(
                 "{}{}{}",
                 "[".dark_cyan(),
@@ -72,14 +78,21 @@ impl Cli {
         match &self.command {
             Some(Command::Init(cmd)) => cmd.run(config).await,
             Some(Command::Launch(cmd)) => cmd.run(config),
-            Some(Command::Supported(cmd)) => cmd.run(),
             Some(Command::Connect(cmd)) => cmd.run().await,
             Some(Command::Context(cmd)) => cmd.run(),
             Some(Command::NxmHandler(cmd)) => cmd.run(config).await,
-            Some(Command::Mods(cmd)) => match cmd {
-                ModsCommand::ListStaged(cmd) => cmd.run(config),
-                ModsCommand::Install(cmd) => cmd.run(config),
-            },
+            Some(Command::Mods(cmd)) => {
+                if current_context.is_none() {
+                    bail!(
+                        "Game context required for mod commands (Try: '{}')",
+                        usage_for!(Cli::CONTEXT)
+                    );
+                }
+                match cmd {
+                    ModsCommand::Install(cmd) => cmd.run(config),
+                    ModsCommand::Downloads(cmd) => cmd.run(config),
+                }
+            }
             None => {
                 use clap::CommandFactory;
                 Cli::command().print_help()?;
