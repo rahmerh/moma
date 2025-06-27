@@ -15,7 +15,7 @@ pub struct Downloads;
 
 impl Downloads {
     pub fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let current_game = match state::current_context()? {
+        let current_game = match state::current_context(&config.state_file)? {
             Some(game) => game,
             None => bail!("No game context set. (Try: {})", usage_for!("context")),
         };

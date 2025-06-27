@@ -65,7 +65,7 @@ impl Cli {
     pub const MOD_INSTALL: &str = "install";
 
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
-        let current_context = state::current_context()?;
+        let current_context = state::current_context(&config.state_file)?;
         if let Some(game) = &current_context {
             println!(
                 "{}{}{}",
@@ -79,7 +79,7 @@ impl Cli {
             Some(Command::Init(cmd)) => cmd.run(config).await,
             Some(Command::Launch(cmd)) => cmd.run(config),
             Some(Command::Connect(cmd)) => cmd.run().await,
-            Some(Command::Context(cmd)) => cmd.run(),
+            Some(Command::Context(cmd)) => cmd.run(config),
             Some(Command::NxmHandler(cmd)) => cmd.run(config).await,
             Some(Command::Mods(cmd)) => {
                 if current_context.is_none() {

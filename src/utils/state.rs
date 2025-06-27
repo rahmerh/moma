@@ -5,15 +5,14 @@ use owo_colors::OwoColorize;
 
 use crate::games::Game;
 
-const STATE_FILE: &str = "/tmp/moma_state";
+pub const STATE_FILE_PATH: &str = "/tmp/moma_state";
 
-pub fn current_context() -> anyhow::Result<Option<Game>> {
-    let path = PathBuf::from(STATE_FILE);
-    if !path.exists() {
+pub fn current_context(state_file: &PathBuf) -> anyhow::Result<Option<Game>> {
+    if !state_file.exists() {
         return Ok(None);
     }
 
-    let contents = fs::read_to_string(&path).context("Failed to read state file")?;
+    let contents = fs::read_to_string(state_file).context("Failed to read state file")?;
     let trimmed = contents.trim();
 
     if trimmed.is_empty() {
@@ -26,8 +25,8 @@ pub fn current_context() -> anyhow::Result<Option<Game>> {
     }
 }
 
-pub fn set_context(game: Game) -> anyhow::Result<()> {
-    fs::write(STATE_FILE, game.id())?;
+pub fn set_context(state_file: &PathBuf, game: Game) -> anyhow::Result<()> {
+    fs::write(state_file, game.id())?;
     println!(
         "{} {}",
         "Game context set to".cyan().bold(),
@@ -36,11 +35,9 @@ pub fn set_context(game: Game) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn clear_context() -> anyhow::Result<()> {
-    let path = PathBuf::from(STATE_FILE);
-
-    if path.exists() {
-        fs::remove_file(path).context("Could not remove state file")?;
+pub fn clear_context(state_file: &PathBuf) -> anyhow::Result<()> {
+    if state_file.exists() {
+        fs::remove_file(state_file).context("Could not remove state file")?;
         println!("{}", "Game context cleared.".cyan().bold());
     } else {
         println!("{}", "No game context was set.".yellow());

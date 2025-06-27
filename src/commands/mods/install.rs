@@ -19,7 +19,7 @@ pub struct Install {
 
 impl Install {
     pub fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let current_game = match state::current_context()? {
+        let current_game = match state::current_context(&config.state_file)? {
             Some(game) => game,
             None => bail!("No game context set, please run 'moma context' first."),
         };

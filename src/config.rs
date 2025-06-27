@@ -12,7 +12,7 @@ use std::{
 use crate::{
     sources::Source,
     ui::prompt,
-    utils::{fs::ExpandTilde, os::permissions},
+    utils::{fs::ExpandTilde, os::permissions, state},
 };
 
 pub const CACHE_DIR_NAME: &str = ".cache";
@@ -24,6 +24,7 @@ pub struct Config {
     pub work_dir: PathBuf,
     pub steam_dir: Option<PathBuf>,
     pub nexus_api_key: Option<String>,
+    pub state_file: PathBuf,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -168,6 +169,7 @@ impl Default for Config {
             work_dir: PathBuf::from("~/.moma").expand(),
             steam_dir: None,
             nexus_api_key: None,
+            state_file: PathBuf::from(state::STATE_FILE_PATH),
         }
     }
 }

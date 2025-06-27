@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::{games::Game, utils::state};
+use crate::{config::Config, games::Game, utils::state};
 
 #[derive(Args)]
 pub struct Context {
@@ -8,16 +8,16 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub fn run(&self, config: &Config) -> anyhow::Result<()> {
         if self.game.to_lowercase() == "clear" {
-            state::clear_context()?;
+            state::clear_context(&config.state_file)?;
             return Ok(());
         }
 
         let game = Game::from_id(&self.game)
             .ok_or_else(|| anyhow::anyhow!("Unknown game '{}'", self.game))?;
 
-        state::set_context(game)?;
+        state::set_context(&config.state_file, game)?;
         Ok(())
     }
 }
