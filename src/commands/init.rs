@@ -81,6 +81,7 @@ impl Init {
 
         let workspace = Workspace::new(&game, config)?;
         workspace.prepare_file_system()?;
+
         let env_store = EnvStore::new(workspace);
         env_store
             .store_env_vars(std::env::vars().collect())

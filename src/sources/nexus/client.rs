@@ -2,7 +2,7 @@ use std::{
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
 use anyhow::{Context, bail};
@@ -11,7 +11,6 @@ use reqwest::{
     Client, Url,
     header::{self, HeaderMap, HeaderValue},
 };
-use std::collections::VecDeque;
 use tokio::io::AsyncReadExt;
 use tokio_util::io::StreamReader;
 

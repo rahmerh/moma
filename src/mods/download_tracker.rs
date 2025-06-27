@@ -1,13 +1,13 @@
 use std::{
     fs::{self, File},
-    path::{Path, PathBuf},
+    path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
     games::workspace::Workspace,
     mods::mod_list_store::ModListStore,
-    types::{DownloadProgress, FileStatus, ModArchive},
+    types::{DownloadProgress, FileStatus},
 };
 
 pub struct DownloadTracker {

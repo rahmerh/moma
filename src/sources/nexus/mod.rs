@@ -8,7 +8,7 @@ use crate::{
     games::Game,
     sources::nexus::{client::NexusClient, config::Config, types::DownloadInfoRequest},
     types::{Mod, ModArchive},
-    ui::{self, prompt},
+    ui::prompt,
 };
 
 mod client;

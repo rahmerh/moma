@@ -7,7 +7,7 @@ use std::{
 use anyhow::Context;
 use crossterm::{
     cursor::{MoveDown, MoveToColumn, MoveUp},
-    execute,
+    queue,
     terminal::{Clear, ClearType},
 };
 use dialoguer::{Confirm, Input, MultiSelect, Password, Select};
@@ -156,11 +156,11 @@ pub fn clear_previous_lines(amount: u16, skip: u16) -> std::io::Result<()> {
     let mut stdout = stdout();
 
     if skip > 0 {
-        execute!(stdout, MoveUp(skip), MoveToColumn(0))?;
+        queue!(stdout, MoveUp(skip), MoveToColumn(0))?;
     }
 
     for _ in 0..amount {
-        execute!(
+        queue!(
             stdout,
             MoveUp(1),
             MoveToColumn(0),
@@ -169,7 +169,7 @@ pub fn clear_previous_lines(amount: u16, skip: u16) -> std::io::Result<()> {
     }
 
     if skip > 0 {
-        execute!(stdout, MoveDown(1 + skip), MoveToColumn(0))?;
+        queue!(stdout, MoveDown(1 + skip), MoveToColumn(0))?;
     }
 
     stdout.flush()

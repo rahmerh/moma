@@ -1,8 +1,5 @@
-use std::path::PathBuf;
-
-use serde::Deserialize;
-
 use crate::types::{FileStatus, Mod, ModArchive};
+use serde::Deserialize;
 
 // Request structs
 
