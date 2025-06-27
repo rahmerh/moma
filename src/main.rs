@@ -2,6 +2,11 @@ mod cli;
 mod commands;
 mod config;
 mod games;
+mod mods;
+mod sources;
+mod types;
+mod ui;
+#[macro_use]
 mod utils;
 
 use clap::Parser;
@@ -9,7 +14,9 @@ use owo_colors::OwoColorize;
 
 use crate::{cli::Cli, config::Config};
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    env_logger::init();
     std::panic::set_hook(Box::new(|info| {
         eprintln!("{} {}", "Encountered a panic:".red().bold(), info);
         std::process::exit(1);
@@ -17,20 +24,18 @@ fn main() {
 
     let cli = Cli::parse();
 
-    if let Err(err) = run(&cli) {
+    if let Err(err) = run(&cli).await {
         eprintln!("{} {}", "Encountered a problem:".red().bold(), err);
 
-        if cli.debug {
-            for cause in err.chain().skip(1) {
-                eprintln!(" -> caused by: {}", cause);
-            }
+        for cause in err.chain().skip(1) {
+            log::debug!(" -> caused by: {}", cause);
         }
         std::process::exit(1);
     }
 }
 
-fn run(cli: &Cli) -> anyhow::Result<()> {
+async fn run(cli: &Cli) -> anyhow::Result<()> {
     let mut config = Config::load_or_default()?;
-    cli.run(&mut config)?;
+    cli.run(&mut config).await?;
     Ok(())
 }

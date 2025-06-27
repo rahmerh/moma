@@ -12,6 +12,7 @@ install:
 		exit 1; \
 	fi
 	@install -Dm755 $(TARGET) $(INSTALL_BIN_DIR)/$(BINARY_NAME)
+	@install -Dm644 assets/logo.png /usr/share/icons/hicolor/48x48/apps/moma.png
 	@echo "Installed moma to $(INSTALL_BIN_DIR)/$(BINARY_NAME)."
 
 uninstall:

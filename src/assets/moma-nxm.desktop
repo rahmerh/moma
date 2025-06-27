@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Moma NXM Handler
+Exec=moma nxm %u
+Type=Application
+NoDisplay=true
+MimeType=x-scheme-handler/nxm;

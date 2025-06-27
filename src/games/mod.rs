@@ -1,27 +1,76 @@
-use std::path::{Path, PathBuf};
+use std::{fmt::Display, path::PathBuf};
 
-use crate::{
-    config::{Config, GameConfig},
-    games::skyrim::SkyrimSe,
-};
+use strum_macros::EnumIter;
 
-pub mod context;
-pub mod skyrim;
+use crate::{config::Config, sources::Source, utils::fs::ExpandTilde};
 
-pub trait GameProfile {
-    fn name(&self) -> &'static str;
-    fn default_game_path(&self, steam_dir: &Path) -> PathBuf;
-    fn game_executable(&self) -> &'static str;
-    fn game_mod_executable(&self) -> &'static str;
-    fn setup_modding(&self, config: &Config, config: &GameConfig) -> anyhow::Result<()>;
+pub mod skyrimse;
+pub mod workspace;
+
+#[derive(clap::ValueEnum, EnumIter, Clone)]
+pub enum Game {
+    SkyrimSE,
 }
 
-pub fn get_supported_games() -> Vec<Box<dyn GameProfile>> {
-    vec![Box::new(SkyrimSe {})]
+impl Display for Game {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Game::SkyrimSE => write!(f, "Skyrim Special Edition"),
+        }
+    }
 }
 
-pub fn get_game_profile_by_name(name: &str) -> Option<Box<dyn GameProfile>> {
-    get_supported_games()
-        .into_iter()
-        .find(|g| g.name().eq_ignore_ascii_case(name))
+impl Game {
+    pub fn id(&self) -> &'static str {
+        match self {
+            Game::SkyrimSE => "skyrimse",
+        }
+    }
+
+    pub fn from_id(id: &str) -> Option<Self> {
+        match id {
+            "skyrimse" => Some(Game::SkyrimSE),
+            _ => None,
+        }
+    }
+
+    pub fn default_game_path(&self, config: &Config) -> anyhow::Result<PathBuf> {
+        let steam_dir = config
+            .steam_dir
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Could not read your Steam dir from config."))?;
+
+        let path = match self {
+            Game::SkyrimSE => steam_dir
+                .join("steamapps")
+                .join("common")
+                .join("Skyrim Special Edition"),
+        };
+
+        Ok(path.expand())
+    }
+
+    pub fn default_mod_sources(&self) -> Vec<Source> {
+        match self {
+            Game::SkyrimSE => skyrimse::supported_sources(),
+        }
+    }
+
+    pub fn game_mod_executable(&self) -> &'static str {
+        match self {
+            Game::SkyrimSE => skyrimse::game_mod_executable(),
+        }
+    }
+
+    pub fn work_dir(&self, config: &Config) -> PathBuf {
+        match self {
+            Game::SkyrimSE => config.work_dir.join(self.id()).expand(),
+        }
+    }
+
+    pub async fn setup(&self, config: &Config) -> anyhow::Result<()> {
+        match self {
+            Game::SkyrimSE => skyrimse::setup(config).await,
+        }
+    }
 }

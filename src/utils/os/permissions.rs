@@ -1,32 +1,10 @@
-use std::{env, ffi::CString, fs, io, os::unix::ffi::OsStrExt, path::Path, process::Command};
+use std::{env, ffi::CString, fs, os::unix::ffi::OsStrExt, path::Path};
 
 use anyhow::Context;
-use libc::{CLONE_NEWNS, chown, getuid, gid_t, uid_t};
+use libc::{chown, getuid, gid_t, uid_t};
 
 pub fn is_process_root() -> bool {
     unsafe { getuid() == 0 }
-}
-
-pub fn unshare_current_namespace() -> anyhow::Result<()> {
-    let result = unsafe { libc::unshare(CLONE_NEWNS) };
-
-    if result == -1 {
-        let errno = io::Error::last_os_error();
-        Err(anyhow::anyhow!("Failed to unshare namespace: {}", errno))
-            .with_context(|| "unshare(CLONE_NEWNS | CLONE_NEWPID) failed")
-    } else {
-        Ok(())
-    }
-}
-
-pub fn remount_current_namespace_as_private() -> anyhow::Result<()> {
-    Command::new("mount")
-        .args(["--make-rprivate", "/"])
-        .status()
-        .with_context(|| "Failed to set mount propagation to private")?
-        .success()
-        .then_some(())
-        .ok_or_else(|| anyhow::anyhow!("mount --make-rprivate / failed"))
 }
 
 pub fn drop_privileges() -> anyhow::Result<()> {
@@ -70,20 +48,23 @@ pub fn chown_dir(dir: &Path, recursive: bool) -> anyhow::Result<()> {
         .unwrap_or_else(|| unsafe { libc::getgid() });
 
     if recursive {
-        for entry in fs::read_dir(dir)? {
+        for entry in
+            fs::read_dir(dir).with_context(|| format!("Failed to read dir: {}", dir.display()))?
+        {
             let entry = entry?;
             let path = entry.path();
 
             if path.is_dir() {
-                chown_dir(&path, true)?;
+                chown_dir(&path, true)
+                    .with_context(|| format!("Failed to recurse into dir: {}", path.display()))?;
             }
 
-            chown_path(&path, uid, gid)?;
+            chown_path(&path, uid, gid)
+                .with_context(|| format!("Failed to chown: {}", path.display()))?;
         }
     }
 
-    chown_path(dir, uid, gid)?;
-    Ok(())
+    chown_path(dir, uid, gid)
 }
 
 fn chown_path(path: &Path, uid: uid_t, gid: gid_t) -> anyhow::Result<()> {
