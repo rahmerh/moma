@@ -22,7 +22,7 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 
 - **One-command setup** – Automatically prepares your modding environment and config folders.
 - **Clean modded game launching** – Keep your base game untouched with isolated mod layers.
-- **Mod source integration** – Connect to sources like Nexus Mods with secure API key handling.
+- **Mod source integration** – Connect to sources like Nexus Mods for easy mod installation.
 - **Live download tracking** – Monitor active downloads with real-time progress and status.
 
 ## Installation
