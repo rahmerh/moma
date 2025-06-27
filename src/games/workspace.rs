@@ -118,14 +118,17 @@ impl Workspace {
 
         paths.sort_by_key(|p| p.components().count());
 
+        println!("\nPreparing file system.");
         for path in paths {
             if !path.exists() {
-                println!("Creating: '{}'", path.display());
+                println!("- '{}'", path.display());
             }
 
             fs::create_dir_all(&path)
                 .with_context(|| format!("Failed to create '{}'", path.display()))?;
         }
+
+        println!();
 
         Ok(())
     }

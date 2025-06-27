@@ -102,13 +102,15 @@ impl Nexus {
                 .bold()
         );
 
-        if prompt::confirm("Do you want to set up the nxm link handler?")? {
-            println!(
-                "{}\n{}",
-                "Copying moma-nxm.desktop to ~/.local/share/applications".italic(),
-                "Executing 'xdg-mime default moma-nxm.desktop x-scheme-handler/nxm'".italic()
-            );
-
+        println!(
+            "{}\n{}\n{}\n",
+            "To install the nxm link handler, the following will happen:"
+                .cyan()
+                .bold(),
+            "Copying moma-nxm.desktop to ~/.local/share/applications".italic(),
+            "Executing 'xdg-mime default moma-nxm.desktop x-scheme-handler/nxm'".italic()
+        );
+        if prompt::confirm("Continue?")? {
             let desktop_file = include_str!("../../assets/moma-nxm.desktop");
             let local_share =
                 dirs_next::data_dir().unwrap_or_else(|| PathBuf::from("~/.local/share"));
