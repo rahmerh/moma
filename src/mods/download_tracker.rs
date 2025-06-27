@@ -51,7 +51,8 @@ impl DownloadTracker {
                     match serde_json::from_str::<DownloadProgress>(&contents) {
                         Ok(progress) => {
                             let age = now.saturating_sub(progress.updated_at);
-                            if age > 60 {
+                            // Age in seconds, allow idle for 5 mins.
+                            if age > 300 {
                                 is_failed = true;
                                 reason = "interrupted";
                             }
@@ -87,7 +88,7 @@ impl DownloadTracker {
         Ok(tracking_file)
     }
 
-    fn tracking_file(&self, file_uid: u64) -> PathBuf {
+    pub fn tracking_file(&self, file_uid: u64) -> PathBuf {
         self.workspace
             .tracking_dir()
             .join(format!("{}.json", file_uid.to_string()))

@@ -21,6 +21,10 @@ impl ModListStore {
         Self { workspace }
     }
 
+    pub fn archive_dest(&self, file_name: &str) -> PathBuf {
+        self.workspace.cache_dir().join(file_name)
+    }
+
     pub fn read(&self) -> anyhow::Result<ModList> {
         let mod_list_path = self.workspace.work_dir().join(workspace::MOD_LIST_FILE);
 
@@ -60,10 +64,6 @@ impl ModListStore {
         })?;
 
         Ok(())
-    }
-
-    pub fn archive_dest(&self, file_name: &str) -> PathBuf {
-        self.workspace.cache_dir().join(file_name)
     }
 
     pub fn install_archive(&self, m: &Mod, archive: &ModArchive) -> anyhow::Result<()> {

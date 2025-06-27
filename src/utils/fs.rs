@@ -36,7 +36,7 @@ pub fn extract_archive(
     match ext.as_deref() {
         Some("zip") => extract_zip(archive_path, target_dir)?,
         Some("7z") => sevenz_rust2::decompress_file(archive_path, target_dir)?,
-        Some("rar") => extrat_rar(archive_path, target_dir)?,
+        Some("rar") => extract_rar(archive_path, target_dir)?,
         Some(ext) => bail!("Unsupported archive format: .{}", ext),
         None => bail!("Archive file has no extension"),
     }
@@ -121,7 +121,7 @@ fn extract_zip(archive_path: &Path, target_dir: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn extrat_rar(archive_path: &Path, target_dir: &Path) -> anyhow::Result<()> {
+fn extract_rar(archive_path: &Path, target_dir: &Path) -> anyhow::Result<()> {
     let archive = Archive::new(&archive_path).open_for_processing()?;
     let archive = archive.read_header()?.expect("empty archive");
     archive.extract_with_base(target_dir)?;

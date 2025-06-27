@@ -91,6 +91,7 @@ NXM link handler (Nexus download URLs)
 - Proper error handling (remove anyhow crate)
 - Logging for debug purposes
 - Proper usage- and in depth documentation
+- Websocket server for download (or others) progress
 - Live mounted preview (to show overrides and metadata)
 - Load order validation and sorting
 

@@ -37,6 +37,11 @@ impl Install {
             })
             .collect();
 
+        if mods_with_downloaded_archives.is_empty() {
+            println!("{}", "No mods available for installation.".italic());
+            return Ok(());
+        }
+
         for mod_entry in mods_with_downloaded_archives {
             let name = mod_entry.name.to_string();
             println!(
@@ -52,13 +57,19 @@ impl Install {
                     &mod_entry.archives,
                 )?;
 
-                println!(
-                    "\nPlease order the archives, each archive overwrites the archive below it.\n"
-                );
+                let to_install = if selection.len() > 1 {
+                    println!(
+                        "\nMultiple archives selected. Order matters — each archive may overwrite files from the one before it.\nPlease arrange them in the desired installation order.\n"
+                    );
 
-                let ordered = reorder::reorder_items(selection)?;
+                    let mut reordered = reorder::reorder_items(selection)?;
+                    reordered.reverse();
+                    reordered
+                } else {
+                    selection
+                };
 
-                archives_to_install.extend(ordered);
+                archives_to_install.extend(to_install);
             } else {
                 archives_to_install.extend(mod_entry.archives.clone());
             }

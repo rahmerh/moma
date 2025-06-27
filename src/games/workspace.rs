@@ -106,7 +106,7 @@ impl Workspace {
             return Ok(());
         }
 
-        let paths = vec![
+        let mut paths = vec![
             self.proton_work_dir(),
             self.overlay_merged_dir(),
             self.overlay_work_dir(),
@@ -116,15 +116,16 @@ impl Workspace {
             self.mods_dir(),
         ];
 
+        paths.sort_by_key(|p| p.components().count());
+
         for path in paths {
+            if !path.exists() {
+                println!("Creating: '{}'", path.display());
+            }
+
             fs::create_dir_all(&path)
                 .with_context(|| format!("Failed to create '{}'", path.display()))?;
         }
-
-        permissions::chown_dir(&self.overlay_dir(), false)?;
-        permissions::chown_dir(&self.proton_work_dir(), false)?;
-        permissions::chown_dir(&self.active_dir(), true)?;
-        permissions::chown_dir(&self.sink_dir(), true)?;
 
         Ok(())
     }
