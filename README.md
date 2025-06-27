@@ -20,7 +20,7 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 
 ## Features
 
-## 🔧 Features
+## Features
 
 - **Instant setup** – Automatically prepares your modding environment and config folders.
 - **Multi-game support** – Seamlessly switch between modded games without cross-contamination.
