@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::{Context, bail};
-use unrar::{Archive, OpenArchive};
+use unrar::Archive;
 use zip::ZipArchive;
 
 pub trait ExpandTilde {

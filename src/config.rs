@@ -163,11 +163,9 @@ pub(crate) fn resolve_config_file_path(filename: &str) -> Option<PathBuf> {
 
 impl Default for Config {
     fn default() -> Self {
-        let path = PathBuf::from("~/.moma").expand().display().to_string();
-        let work_dir = PathBuf::from(path);
         Self {
             games: HashMap::new(),
-            work_dir,
+            work_dir: PathBuf::from("~/.moma").expand(),
             steam_dir: None,
             nexus_api_key: None,
         }
