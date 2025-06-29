@@ -101,7 +101,7 @@ impl Workspace {
     }
 
     pub fn prepare_file_system(&self) -> anyhow::Result<()> {
-        // These folders can't be made by a root process, which could happen if someone ran moma launch before init.
+        // These folders shouldn't be made by a root process, this will result in issues when launching a game.
         if permissions::is_process_root() {
             return Ok(());
         }
@@ -129,6 +129,383 @@ impl Workspace {
         }
 
         println!();
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::bail;
+    use std::collections::HashMap;
+    use tempfile::TempDir;
+    use walkdir::{DirEntry, WalkDir};
+
+    fn is_leaf(entry: &DirEntry) -> anyhow::Result<&DirEntry> {
+        if !entry.metadata()?.is_dir() {
+            bail!("Not a dir");
+        }
+
+        for e in fs::read_dir(entry.path())? {
+            if e?.path().is_dir() {
+                bail!("Not a leaf");
+            }
+        }
+
+        Ok(entry)
+    }
+
+    fn setup(game: &Game) -> anyhow::Result<Config> {
+        let tmp_dir = TempDir::new()?;
+
+        let work_dir = tmp_dir.path().join("working");
+        let steam_dir = tmp_dir.path().join("steam");
+        let state_file = tmp_dir.path().join("unit-test-state");
+
+        let mut games: HashMap<String, GameConfig> = HashMap::new();
+
+        games.insert(
+            game.id().to_string(),
+            GameConfig {
+                name: "skyrimse".to_string(),
+                path: PathBuf::from("/fake/skyrimse"),
+                proton_dir: PathBuf::from("/fake/proton"),
+                env: None,
+                sources: vec![],
+            },
+        );
+
+        let config: Config = Config {
+            games,
+            work_dir,
+            steam_dir: Some(steam_dir),
+            nexus_api_key: Some("api_key".to_string()),
+            state_file,
+        };
+
+        Ok(config)
+    }
+
+    #[test]
+    fn new_should_return_err_when_game_config_non_existant() {
+        // Arrange
+        let config: Config = Config {
+            games: HashMap::new(),
+            work_dir: PathBuf::from("test"),
+            steam_dir: Some(PathBuf::from("test")),
+            nexus_api_key: Some("api_key".to_string()),
+            state_file: PathBuf::from("test"),
+        };
+
+        // Act
+        let result = Workspace::new(&Game::SkyrimSE, &config);
+
+        // Arrange
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn active_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.active_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()).join(ACTIVE));
+
+        Ok(())
+    }
+
+    #[test]
+    fn tracking_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.tracking_dir();
+
+        // Assert
+        assert_eq!(
+            actual,
+            config.work_dir.join(game.id()).join(CACHE).join(TRACKING)
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn overlay_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.overlay_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()).join(OVERLAY));
+
+        Ok(())
+    }
+
+    #[test]
+    fn overlay_merged_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.overlay_merged_dir();
+
+        // Assert
+        assert_eq!(
+            actual,
+            config.work_dir.join(game.id()).join(OVERLAY).join(MERGED)
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn overlay_work_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.overlay_work_dir();
+
+        // Assert
+        assert_eq!(
+            actual,
+            config.work_dir.join(game.id()).join(OVERLAY).join(WORK)
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn cache_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.cache_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()).join(CACHE));
+
+        Ok(())
+    }
+
+    #[test]
+    fn mods_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.mods_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()).join(MODS));
+
+        Ok(())
+    }
+
+    #[test]
+    fn game_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.game_dir();
+
+        // Assert
+        let expected = config.games.get(game.id()).unwrap().path.clone();
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn staging_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.staging_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()).join(STAGING));
+
+        Ok(())
+    }
+
+    #[test]
+    fn sink_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.sink_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()).join(SINK));
+
+        Ok(())
+    }
+
+    #[test]
+    fn proton_work_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.proton_work_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()).join(PROTON));
+
+        Ok(())
+    }
+
+    #[test]
+    fn proton_binary_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.proton_binary();
+
+        // Assert
+        let expected = config
+            .games
+            .get(game.id())
+            .unwrap()
+            .proton_dir
+            .clone()
+            .join("proton");
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn work_dir_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let actual = sut.work_dir();
+
+        // Assert
+        assert_eq!(actual, config.work_dir.join(game.id()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn prepare_file_system_should_create_dirs_if_non_existent() -> anyhow::Result<()> {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        // Act
+        let result = sut.prepare_file_system();
+
+        // Assert
+        assert!(result.is_ok());
+
+        let actual: Vec<DirEntry> = WalkDir::new(&config.work_dir.parent().unwrap())
+            .into_iter()
+            .filter_map(Result::ok)
+            .filter(|d| is_leaf(d).is_ok())
+            .collect();
+
+        assert_eq!(actual.len(), 7);
+
+        let folder_names: Vec<String> = actual
+            .iter()
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .collect();
+
+        assert!(folder_names.contains(&PROTON.to_string()));
+        assert!(folder_names.contains(&MERGED.to_string()));
+        assert!(folder_names.contains(&WORK.to_string()));
+        assert!(folder_names.contains(&ACTIVE.to_string()));
+        assert!(folder_names.contains(&TRACKING.to_string()));
+        assert!(folder_names.contains(&SINK.to_string()));
+        assert!(folder_names.contains(&MODS.to_string()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn prepare_file_system_should_not_overwrite_folders_if_they_already_exist() -> anyhow::Result<()>
+    {
+        // Arrange
+        let game = Game::SkyrimSE;
+        let config = setup(&game)?;
+
+        let sut = Workspace::new(&game, &config)?;
+
+        sut.prepare_file_system()?;
+
+        let file_path = sut.work_dir().join("test.txt");
+        fs::write(&file_path, "Sample value")?;
+
+        // Act
+        let result = sut.prepare_file_system();
+
+        // Assert
+        assert!(result.is_ok());
+
+        assert!(file_path.exists());
+        let content = fs::read_to_string(file_path)?;
+        assert_eq!("Sample value", content);
 
         Ok(())
     }
