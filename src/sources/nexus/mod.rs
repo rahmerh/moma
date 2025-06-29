@@ -73,7 +73,9 @@ impl Nexus {
         let api_key: String;
         loop {
             let input = prompt::password("Enter your Nexus API key")?;
-            match NexusClient::validate_key(&input).await {
+            match NexusClient::validate_key(&input, Url::parse(client::DEFAULT_NEXUS_BASE_URL)?)
+                .await
+            {
                 Ok(res) => {
                     api_key = res.key;
                     break;
@@ -85,9 +87,10 @@ impl Nexus {
             };
         }
 
-        let nexus_user = NexusClient::validate_key(&api_key)
-            .await
-            .with_context(|| "Could not validate the nexus API key")?;
+        let nexus_user =
+            NexusClient::validate_key(&api_key, Url::parse(client::DEFAULT_NEXUS_BASE_URL)?)
+                .await
+                .with_context(|| "Could not validate the nexus API key")?;
 
         Config::save_api_key(&nexus_user.key)?;
         let mut config = Config::default();

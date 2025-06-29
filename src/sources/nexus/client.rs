@@ -27,11 +27,12 @@ use crate::{
     types::DownloadProgress,
 };
 
-const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
-
 pub struct NexusClient {
     client: Client,
+    base_url: Url,
 }
+
+pub const DEFAULT_NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1";
 
 // Documentation: https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
 impl NexusClient {
@@ -40,32 +41,37 @@ impl NexusClient {
             .api_key
             .as_ref()
             .with_context(|| "Nexus API key not set")?;
-        Self::with_key(api_key)
+
+        let client = Self::create_client_with_api_key(api_key)?;
+        let base_url = config
+            .base_url
+            .clone()
+            .unwrap_or_else(|| DEFAULT_NEXUS_BASE_URL.to_string());
+
+        Ok(Self {
+            client,
+            base_url: Url::parse(&base_url)?,
+        })
     }
 
-    fn with_key(api_key: &str) -> anyhow::Result<Self> {
+    fn create_client_with_api_key(api_key: &str) -> anyhow::Result<Client> {
         let mut headers = HeaderMap::new();
 
         headers.insert("apikey", HeaderValue::from_str(api_key.trim())?);
         headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
 
-        let client = Client::builder()
+        Client::builder()
             .default_headers(headers)
             .build()
-            .context("Failed to build HTTP client")?;
-
-        Ok(Self { client })
+            .context("Failed to build HTTP client")
     }
 
-    pub async fn validate_key(api_key: &str) -> anyhow::Result<ValidateResponse> {
-        let client = Self::with_key(api_key)?;
-        client.validate().await
-    }
-
-    pub async fn validate(&self) -> anyhow::Result<ValidateResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?.join("users/validate.json")?;
-
-        let res = self.client.get(url).send().await?;
+    pub async fn validate_key(api_key: &str, base_url: Url) -> anyhow::Result<ValidateResponse> {
+        let client = Self::create_client_with_api_key(api_key)?;
+        let res = client
+            .get(base_url.join("users/validate.json")?)
+            .send()
+            .await?;
 
         if !res.status().is_success() {
             bail!("Invalid API key or access denied");
@@ -75,6 +81,7 @@ impl NexusClient {
             .json()
             .await
             .context("Failed to deserialize validate response")?;
+
         Ok(response)
     }
 
@@ -82,7 +89,8 @@ impl NexusClient {
         &self,
         request: DownloadInfoRequest,
     ) -> anyhow::Result<DownloadInfoResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?
+        let url = self
+            .base_url
             .join("games/")?
             .join(&format!("{}/", request.game))?
             .join("mods/")?
@@ -110,7 +118,8 @@ impl NexusClient {
     }
 
     pub async fn get_mod_info(&self, game: &Game, mod_id: &str) -> anyhow::Result<ModInfoResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?
+        let url = self
+            .base_url
             .join("games/")?
             .join(&format!("{}/", nexus::to_nexus_domain(game)?))?
             .join("mods/")?
@@ -129,7 +138,8 @@ impl NexusClient {
         mod_id: &str,
         file_id: &str,
     ) -> anyhow::Result<ModFileInfoResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?
+        let url = self
+            .base_url
             .join("games/")?
             .join(&format!("{}/", nexus::to_nexus_domain(game)?))?
             .join("mods/")?
