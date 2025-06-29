@@ -76,7 +76,7 @@ impl Launch {
                 );
                 continue;
             }
-            copy_dir(&entry.path(), &context.overlay_merged_dir(), true, true)?;
+            copy_dir(&entry.path(), &context.overlay_merged_dir(), true)?;
         }
 
         permissions::drop_privileges()?;
