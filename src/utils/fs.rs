@@ -326,7 +326,7 @@ mod tests {
         // Arrange
         let tmp_dir = setup();
 
-        fs::copy("test-assets/input.rar", tmp_dir.path().join("input.rar"))?;
+        fs::copy("assets/test/input.rar", tmp_dir.path().join("input.rar"))?;
         let input_archive = tmp_dir.path().join("input.rar");
 
         let output_dir = tmp_dir.path().join("output/");

@@ -21,7 +21,7 @@ impl ModListStore {
         Self { workspace }
     }
 
-    pub fn archive_dest(&self, file_name: &str) -> PathBuf {
+    pub fn archive_download_dest(&self, file_name: &str) -> PathBuf {
         self.workspace.cache_dir().join(file_name)
     }
 
@@ -169,6 +169,147 @@ impl ModListStore {
             .with_context(|| "Failed to open mod list file for writing")?;
 
         serde_json::to_writer_pretty(mod_list_file, mod_list)?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        config::{Config, GameConfig},
+        games::Game,
+    };
+    use std::{collections::HashMap, fs::File, os::unix::fs::PermissionsExt};
+    use tempfile::TempDir;
+
+    fn setup(game: &Game) -> anyhow::Result<Workspace> {
+        let tmp_dir = TempDir::new()?;
+
+        let work_dir = tmp_dir.path().join("working");
+        let steam_dir = tmp_dir.path().join("steam");
+        let state_file = tmp_dir.path().join("unit-test-state");
+
+        let mut games: HashMap<String, GameConfig> = HashMap::new();
+
+        games.insert(
+            game.id().to_string(),
+            GameConfig {
+                name: "skyrimse".to_string(),
+                path: PathBuf::from("/fake/skyrimse"),
+                proton_dir: PathBuf::from("/fake/proton"),
+                env: None,
+                sources: vec![],
+            },
+        );
+
+        let config: Config = Config {
+            games,
+            work_dir,
+            steam_dir: Some(steam_dir),
+            nexus_api_key: Some("api_key".to_string()),
+            state_file,
+        };
+
+        Workspace::new(game, &config)
+    }
+
+    #[test]
+    fn archive_download_dest_should_return_full_archive_path() -> anyhow::Result<()> {
+        // Arrange
+        let ws = setup(&Game::SkyrimSE)?;
+        let sut = ModListStore::new(ws.clone());
+
+        let input = "archive.7z";
+
+        // Act
+        let result = sut.archive_download_dest(&input);
+
+        // Assert
+        assert_eq!(result, ws.cache_dir().join(input));
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_should_return_mod_list_if_file_exists() -> anyhow::Result<()> {
+        // Arrange
+        let ws = setup(&Game::SkyrimSE)?;
+        ws.prepare_file_system()?;
+        let sut = ModListStore::new(ws.clone());
+
+        let m = Mod {
+            uid: 1,
+            name: "Test mod".to_string(),
+            archives: vec![],
+        };
+        let expected = ModList {
+            mods: vec![m.clone()],
+        };
+
+        let mod_list_path = ws.work_dir().join(workspace::MOD_LIST_FILE);
+        let file = File::create(&mod_list_path)?;
+        serde_json::to_writer_pretty(file, &expected)?;
+
+        // Act
+        let result = sut.read();
+
+        // Assert
+        assert!(result.is_ok());
+
+        let actual = result.unwrap();
+
+        assert_eq!(actual.mods.len(), expected.mods.len());
+
+        let actual_mod = actual.mods.first().unwrap();
+
+        assert_eq!(actual_mod.uid, m.uid);
+        assert_eq!(actual_mod.name, m.name);
+        assert!(actual_mod.archives.is_empty());
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_should_return_default_if_no_file_found() -> anyhow::Result<()> {
+        // Arrange
+        let ws = setup(&Game::SkyrimSE)?;
+        let sut = ModListStore::new(ws.clone());
+
+        // Act
+        let result = sut.read();
+
+        // Assert
+        assert!(result.is_ok());
+
+        let expected = ModList::default();
+        let actual = result.unwrap();
+
+        assert_eq!(actual.mods.len(), expected.mods.len());
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_should_return_err_when_mod_list_is_unreadable() -> anyhow::Result<()> {
+        // Arrange
+        let ws = setup(&Game::SkyrimSE)?;
+        ws.prepare_file_system()?;
+        let sut = ModListStore::new(ws.clone());
+
+        let mod_list_path = ws.work_dir().join(workspace::MOD_LIST_FILE);
+        fs::write(&mod_list_path, "")?;
+
+        let mut perms = fs::metadata(&mod_list_path)?.permissions();
+        perms.set_mode(0o000);
+        fs::set_permissions(&mod_list_path, perms)?;
+
+        // Act
+        let result = sut.read();
+
+        // Assert
+        assert!(result.is_err());
 
         Ok(())
     }

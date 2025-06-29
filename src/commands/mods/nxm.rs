@@ -81,7 +81,7 @@ impl NxmHandler {
                 }
             };
         }
-        let archive_path = mod_list_store.archive_dest(&file_info.file_name);
+        let archive_path = mod_list_store.archive_download_dest(&file_info.file_name);
 
         file_info.status = FileStatus::Downloading;
         file_info.archive_path = Some(archive_path.clone());
