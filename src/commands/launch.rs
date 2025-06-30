@@ -13,7 +13,11 @@ use crate::{
     usage_for,
     utils::{
         fs::copy_dir,
-        os::{mount, permissions},
+        os::{
+            mount::{Mountable, OverlayMounter},
+            permissions,
+            system_interface::System,
+        },
         state,
     },
 };
@@ -53,15 +57,16 @@ impl Launch {
 
         let context = Workspace::new(&game, &config)?;
         let env_store = EnvStore::new(context.clone());
+        let system = System;
+        let mounter = OverlayMounter::new(&context, &system);
 
         println!("Launching {}...", game.bold());
 
         print::print_inline_status(&format!("{}", "Mounting game folders...".bold()))?;
 
-        mount::unshare_current_namespace()?;
-        mount::remount_current_namespace_as_private()?;
-
-        mount::mount_overlay_for(&context)
+        mounter.unshare_as_private_namespace()?;
+        mounter
+            .mount_overlay()
             .with_context(|| format!("Could not mount overlay folders for {}", game))?;
 
         print::print_inline_status(&format!("{}", "Copying mods into mounted folder...".bold()))?;
