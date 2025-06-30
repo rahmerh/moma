@@ -1,18 +1,7 @@
-mod cli;
-mod commands;
-mod config;
-mod games;
-mod mods;
-mod sources;
-mod types;
-mod ui;
-#[macro_use]
-mod utils;
-
 use clap::Parser;
 use owo_colors::OwoColorize;
 
-use crate::{cli::Cli, config::Config};
+use moma::{cli::Cli, config::Config}; // now using the `lib.rs`-exposed modules
 
 #[tokio::main]
 async fn main() {

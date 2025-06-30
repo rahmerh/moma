@@ -3,6 +3,10 @@ name = "moma"
 version = "0.5.0"
 edition = "2024"
 
+[features]
+default = []
+unsafe = []
+
 [dependencies]
 anyhow = "1.0.98"
 clap = { version = "4.5.40", features = ["derive"] }

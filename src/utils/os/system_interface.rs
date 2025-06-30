@@ -26,6 +26,10 @@ impl SystemInterface for System {
         if result == -1 {
             return Err(io::Error::last_os_error().into());
         }
-        Ok(())
+
+        let mut cmd = std::process::Command::new("mount");
+        cmd.args(["--make-rprivate", "/"]);
+
+        self.run_command(&mut cmd)
     }
 }
