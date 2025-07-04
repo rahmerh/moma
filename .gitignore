@@ -6,3 +6,5 @@ target/
 *.pdb
 
 **/mutants.out*/
+
+.nvim
