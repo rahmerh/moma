@@ -18,7 +18,7 @@ use crate::{
             permissions,
             system_interface::System,
         },
-        state,
+        state::State,
     },
 };
 
@@ -40,12 +40,15 @@ impl Launch {
 
         let game = match self.game {
             Some(ref game) => game.clone(),
-            None => state::current_context(&config.state_file)?.ok_or_else(|| {
-                anyhow::anyhow!(
-                    "No game specified and no context is set. (Try: '{}')",
-                    usage_for!(Cli::CONTEXT)
-                )
-            })?,
+            None => {
+                let state = State::new(config.state_file());
+                state.current_context()?.ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "No game specified and no context is set. (Try: '{}')",
+                        usage_for!(Cli::CONTEXT)
+                    )
+                })?
+            }
         };
 
         let context = Workspace::new(&game, &config)?;
@@ -91,15 +94,13 @@ impl Launch {
         let mut proton_cmd = Command::new(context.proton_binary());
         proton_cmd.current_dir(&context.active_dir());
 
-        let game_config = config.games.get(game.id()).ok_or_else(|| {
-            anyhow::anyhow!("No configuration found for game {}", game.to_string())
-        })?;
+        let game_config = config.game_config_for(&game)?;
 
         let mut env_vars = env_store.read_env_vars()?;
         env_vars.extend(game_config.get_env_vars());
         proton_cmd.envs(env_vars);
 
-        proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", &config.steam_dir);
+        proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", &config.steam_dir());
         proton_cmd.env("STEAM_COMPAT_DATA_PATH", &context.proton_work_dir());
         proton_cmd.arg("run");
         proton_cmd.arg(&context.active_dir().join(&game.game_mod_executable()));

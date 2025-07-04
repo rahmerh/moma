@@ -1,6 +1,5 @@
 use anyhow::bail;
 use clap::{Parser, Subcommand};
-use owo_colors::OwoColorize;
 
 use crate::{
     commands::{
@@ -11,9 +10,8 @@ use crate::{
         mods::{downloads::Downloads, install::Install, nxm::NxmHandler},
     },
     config::Config,
-    ui::print::Colorize,
     usage_for,
-    utils::state,
+    utils::state::State,
 };
 
 #[derive(Parser)]
@@ -65,16 +63,6 @@ impl Cli {
     pub const MOD_INSTALL: &str = "install";
 
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
-        let current_context = state::current_context(&config.state_file)?;
-        if let Some(game) = &current_context {
-            println!(
-                "{}{}{}",
-                "[".dark_cyan(),
-                game.to_string().bold(),
-                "]".dark_cyan()
-            );
-        }
-
         match &self.command {
             Some(Command::Init(cmd)) => cmd.run(config).await,
             Some(Command::Launch(cmd)) => cmd.run(config),
@@ -82,15 +70,18 @@ impl Cli {
             Some(Command::Context(cmd)) => cmd.run(config),
             Some(Command::NxmHandler(cmd)) => cmd.run(config).await,
             Some(Command::Mods(cmd)) => {
-                if current_context.is_none() {
-                    bail!(
+                let state = State::new(config.state_file());
+                let current_context = match state.current_context()? {
+                    Some(context) => context,
+                    None => bail!(
                         "Game context required for mod commands (Try: '{}')",
                         usage_for!(Cli::CONTEXT)
-                    );
-                }
+                    ),
+                };
+
                 match cmd {
-                    ModsCommand::Install(cmd) => cmd.run(config),
-                    ModsCommand::Downloads(cmd) => cmd.run(config),
+                    ModsCommand::Install(cmd) => cmd.run(config, &current_context),
+                    ModsCommand::Downloads(cmd) => cmd.run(config, &current_context),
                 }
             }
             None => {

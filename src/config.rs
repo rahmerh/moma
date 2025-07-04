@@ -21,11 +21,10 @@ pub const MODS_DIR_NAME: &str = "mods";
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub games: HashMap<String, GameConfig>,
-    pub work_dir: PathBuf,
-    pub steam_dir: PathBuf,
-    pub nexus_api_key: Option<String>,
-    pub state_file: PathBuf,
+    games: HashMap<String, GameConfig>,
+    work_dir: PathBuf,
+    steam_dir: PathBuf,
+    state_file: PathBuf,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -92,7 +91,7 @@ impl Config {
         }
     }
 
-    pub fn get_game_config(&self, game: &Game) -> anyhow::Result<&GameConfig> {
+    pub fn game_config_for(&self, game: &Game) -> anyhow::Result<&GameConfig> {
         self.games.get(game.id()).ok_or_else(|| anyhow::anyhow!(""))
     }
 
@@ -100,6 +99,18 @@ impl Config {
         self.games
             .insert(game_config.game.id().to_string(), game_config);
         self.save()
+    }
+
+    pub fn base_working_dir(&self) -> PathBuf {
+        self.work_dir.clone()
+    }
+
+    pub fn steam_dir(&self) -> PathBuf {
+        self.steam_dir.clone()
+    }
+
+    pub fn state_file(&self) -> PathBuf {
+        self.state_file.clone()
     }
 
     fn save(&self) -> anyhow::Result<()> {
@@ -174,8 +185,7 @@ impl Default for Config {
             games: HashMap::new(),
             work_dir: PathBuf::from("~/.moma").expand(),
             steam_dir: Self::determine_steam_dir().unwrap(),
-            nexus_api_key: None,
-            state_file: PathBuf::from(state::STATE_FILE_PATH),
+            state_file: PathBuf::from(state::DEFAULT_STATE_FILE_PATH),
         }
     }
 }

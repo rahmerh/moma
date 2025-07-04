@@ -22,7 +22,7 @@ impl Init {
         let all_games: Vec<Game> = Game::iter().collect();
         let game = prompt::select("Select game to initialize", &all_games)?;
 
-        if config.games.contains_key(game.id()) {
+        if config.game_config_for(&game).is_ok() {
             if !prompt::confirm(&format!(
                 "{} already setup, do you want to overwrite it?",
                 &game.to_string()
@@ -50,10 +50,6 @@ impl Init {
                 .collect::<Vec<_>>()
                 .join(", ")
         );
-        println!(
-            "Moma's game working directory: \"{}\"\n",
-            game.work_dir(&config).display()
-        );
 
         if !prompt::confirm("Do you want to save this configuration?")? {
             println!("{}", "Configuration not saved. Exiting.".yellow());
@@ -68,7 +64,7 @@ impl Init {
             sources: sources,
         };
 
-        config.add_game_config(game_config);
+        config.add_game_config(game_config)?;
 
         let workspace = Workspace::new(&game, config)?;
         workspace.prepare_file_system()?;
@@ -103,7 +99,7 @@ fn determine_game_installation_dir(game: &Game, config: &Config) -> anyhow::Resu
 }
 
 fn determine_proton(game: &Game, config: &Config) -> anyhow::Result<PathBuf> {
-    let common_dir = config.steam_dir.join("steamapps/common");
+    let common_dir = config.steam_dir().join("steamapps/common");
 
     let entries = std::fs::read_dir(&common_dir)?
         .filter_map(Result::ok)

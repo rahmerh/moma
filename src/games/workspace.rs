@@ -90,13 +90,11 @@ impl Workspace {
     }
 
     pub fn new(game: &Game, config: &Config) -> anyhow::Result<Self> {
-        let game_config = config.games.get(game.id()).ok_or_else(|| {
-            anyhow::anyhow!("No configuration found for game {}", game.to_string())
-        })?;
+        let game_config = config.game_config_for(game)?;
 
         Ok(Self {
             game: game_config.clone(),
-            root: config.work_dir.join(&game_config.game.id()),
+            root: config.base_working_dir().join(&game_config.game.id()),
         })
     }
 

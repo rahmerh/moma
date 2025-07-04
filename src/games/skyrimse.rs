@@ -6,11 +6,11 @@ use std::{
 use owo_colors::OwoColorize;
 
 use crate::{
-    config::{CACHE_DIR_NAME, Config, MODS_DIR_NAME},
-    games::Game,
+    config::Config,
+    games::{Game, workspace::Workspace},
     sources::Source,
     ui::{print, prompt},
-    utils::{self, fs::ExpandTilde},
+    utils::{self},
 };
 use reqwest::get;
 
@@ -28,13 +28,10 @@ pub async fn setup(config: &Config) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let game_work_dir = config.work_dir.join(Game::SkyrimSE.id()).expand();
+    let workspace = Workspace::new(&Game::SkyrimSE, config)?;
 
-    let cache_dir = game_work_dir.join(CACHE_DIR_NAME);
-    let mods_dir = game_work_dir.join(MODS_DIR_NAME);
-
-    let skse_output_dir = mods_dir.join("skse");
-    let skse_archive_path = cache_dir.join("skse.7z");
+    let skse_output_dir = workspace.mods_dir().join("skse");
+    let skse_archive_path = workspace.cache_dir().join("skse.7z");
 
     if skse_output_dir.exists() {
         if prompt::confirm("SKSE already downloaded, do you want to overwrite?")? {
@@ -46,11 +43,12 @@ pub async fn setup(config: &Config) -> anyhow::Result<()> {
 
     println!("{}", "\nSetting up SKSE\n".bold().cyan());
 
-    fs::create_dir_all(&cache_dir)?;
-    fs::create_dir_all(&mods_dir)?;
-
     print::print_inline_status(
-        format!("Downloading SKSE to \"{}\"", cache_dir.to_string_lossy()).as_ref(),
+        format!(
+            "Downloading SKSE to \"{}\"",
+            workspace.cache_dir().display()
+        )
+        .as_ref(),
     )?;
 
     let bytes = get("https://skse.silverlock.org/beta/skse64_2_02_06.7z")

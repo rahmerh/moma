@@ -38,7 +38,7 @@ impl Game {
     pub fn default_game_path(&self, config: &Config) -> anyhow::Result<PathBuf> {
         let path = match self {
             Game::SkyrimSE => config
-                .steam_dir
+                .steam_dir()
                 .join("steamapps")
                 .join("common")
                 .join("Skyrim Special Edition"),
@@ -56,12 +56,6 @@ impl Game {
     pub fn game_mod_executable(&self) -> &'static str {
         match self {
             Game::SkyrimSE => skyrimse::game_mod_executable(),
-        }
-    }
-
-    pub fn work_dir(&self, config: &Config) -> PathBuf {
-        match self {
-            Game::SkyrimSE => config.work_dir.join(self.id()).expand(),
         }
     }
 

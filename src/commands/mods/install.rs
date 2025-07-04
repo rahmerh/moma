@@ -1,14 +1,12 @@
-use anyhow::bail;
 use clap::Args;
 use crossterm::style::Stylize;
 
 use crate::{
     config::Config,
-    games::workspace::Workspace,
+    games::{Game, workspace::Workspace},
     mods::mod_list_store::ModListStore,
     types::{FileStatus, Mod},
     ui::{prompt, reorder},
-    utils::state,
 };
 
 #[derive(Args)]
@@ -18,12 +16,7 @@ pub struct Install {
 }
 
 impl Install {
-    pub fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let current_game = match state::current_context(&config.state_file)? {
-            Some(game) => game,
-            None => bail!("No game context set, please run 'moma context' first."),
-        };
-
+    pub fn run(&self, config: &Config, current_game: &Game) -> anyhow::Result<()> {
         let workspace = Workspace::new(&current_game, config)?;
         let mod_list_store = ModListStore::new(workspace);
         let mod_list = mod_list_store.read()?;
