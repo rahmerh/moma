@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use anyhow::Context;
+use anyhow::{Context, bail};
 
 use crate::{
     config::{Config, GameConfig},
@@ -96,14 +96,14 @@ impl Workspace {
 
         Ok(Self {
             game: game_config.clone(),
-            root: config.work_dir.join(&game_config.name),
+            root: config.work_dir.join(&game_config.game.id()),
         })
     }
 
     pub fn prepare_file_system(&self) -> anyhow::Result<()> {
         // These folders shouldn't be made by a root process, this will result in issues when launching a game.
         if permissions::is_process_root() {
-            return Ok(());
+            bail!("Cannot prepare the filesystem as root.");
         }
 
         let mut paths = vec![
@@ -168,7 +168,7 @@ mod tests {
         games.insert(
             game.id().to_string(),
             GameConfig {
-                name: "skyrimse".to_string(),
+                game: game.clone(),
                 path: PathBuf::from("/fake/skyrimse"),
                 proton_dir: PathBuf::from("/fake/proton"),
                 env: None,
@@ -179,7 +179,7 @@ mod tests {
         let config: Config = Config {
             games,
             work_dir,
-            steam_dir: Some(steam_dir),
+            steam_dir: steam_dir,
             nexus_api_key: Some("api_key".to_string()),
             state_file,
         };
@@ -193,7 +193,7 @@ mod tests {
         let config: Config = Config {
             games: HashMap::new(),
             work_dir: PathBuf::from("test"),
-            steam_dir: Some(PathBuf::from("test")),
+            steam_dir: PathBuf::from("test"),
             nexus_api_key: Some("api_key".to_string()),
             state_file: PathBuf::from("test"),
         };

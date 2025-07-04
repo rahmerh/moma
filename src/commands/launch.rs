@@ -33,17 +33,10 @@ pub struct Launch {
 }
 
 impl Launch {
-    pub fn run(&self, config: &mut Config) -> anyhow::Result<()> {
+    pub fn run(&self, config: &Config) -> anyhow::Result<()> {
         if !permissions::is_process_root() {
             bail!("This command must be run as root. Try again with `sudo`.");
         }
-
-        let steam_dir = config.steam_dir.as_ref().ok_or_else(|| {
-            anyhow::anyhow!(
-                "Missing Steam directory. (Try: '{}')",
-                usage_for!(Cli::INIT)
-            )
-        })?;
 
         let game = match self.game {
             Some(ref game) => game.clone(),
@@ -106,7 +99,7 @@ impl Launch {
         env_vars.extend(game_config.get_env_vars());
         proton_cmd.envs(env_vars);
 
-        proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", steam_dir);
+        proton_cmd.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", &config.steam_dir);
         proton_cmd.env("STEAM_COMPAT_DATA_PATH", &context.proton_work_dir());
         proton_cmd.arg("run");
         proton_cmd.arg(&context.active_dir().join(&game.game_mod_executable()));

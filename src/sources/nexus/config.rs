@@ -3,7 +3,7 @@ use std::fs::{self, File};
 use anyhow::{Context, anyhow, bail};
 use serde::{Deserialize, Serialize};
 
-use crate::{cli::Cli, config, usage_for, utils::os::permissions};
+use crate::{cli::Cli, usage_for, utils::os::permissions};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -18,7 +18,7 @@ const CONFIG_FILE_NAME: &str = "nexus/config.toml";
 
 impl Config {
     pub fn load() -> anyhow::Result<Self> {
-        let config_file_path = config::resolve_config_file_path(CONFIG_FILE_NAME)
+        let config_file_path = crate::config::Config::resolve_config_file_path(CONFIG_FILE_NAME)
             .ok_or_else(|| anyhow!("Failed to resolve config path"))?;
 
         if !config_file_path.exists() {
@@ -34,7 +34,7 @@ impl Config {
         let mut config: Config = toml::from_str(&contents)
             .with_context(|| format!("Failed to parse config at {}", config_file_path.display()))?;
 
-        let api_key_path = config::resolve_config_file_path(API_KEY_FILE_NAME)
+        let api_key_path = crate::config::Config::resolve_config_file_path(API_KEY_FILE_NAME)
             .ok_or_else(|| anyhow!("Failed to resolve api key path"))?;
         if let Ok(key) = fs::read_to_string(&api_key_path) {
             config.api_key = Some(key.trim().to_string());
@@ -44,7 +44,7 @@ impl Config {
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
-        let path = match config::resolve_config_file_path(CONFIG_FILE_NAME) {
+        let path = match crate::config::Config::resolve_config_file_path(CONFIG_FILE_NAME) {
             Some(path) => path,
             None => bail!("Failed to resolve config path"),
         };
@@ -61,7 +61,7 @@ impl Config {
     }
 
     pub fn save_api_key(api_key: &String) -> anyhow::Result<()> {
-        let path = config::resolve_config_file_path(API_KEY_FILE_NAME)
+        let path = crate::config::Config::resolve_config_file_path(API_KEY_FILE_NAME)
             .ok_or_else(|| anyhow::anyhow!("Could not resolve key path"))?;
 
         if !path.exists() {
