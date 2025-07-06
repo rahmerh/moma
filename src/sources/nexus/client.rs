@@ -32,7 +32,7 @@ pub struct NexusClient {
     base_url: Url,
 }
 
-pub const DEFAULT_NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1";
+pub const DEFAULT_NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 
 // Documentation: https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
 impl NexusClient {
@@ -68,19 +68,23 @@ impl NexusClient {
 
     pub async fn validate_key(api_key: &str, base_url: Url) -> anyhow::Result<ValidateResponse> {
         let client = Self::create_client_with_api_key(api_key)?;
+
         let res = client
             .get(base_url.join("users/validate.json")?)
             .send()
             .await?;
 
-        if !res.status().is_success() {
+        let status = res.status();
+        let bytes = res.bytes().await?;
+
+        log::debug!("Validate response: {}", String::from_utf8_lossy(&bytes));
+
+        if !status.is_success() {
             bail!("Invalid API key or access denied");
         }
 
-        let response: ValidateResponse = res
-            .json()
-            .await
-            .context("Failed to deserialize validate response")?;
+        let response: ValidateResponse =
+            serde_json::from_slice(&bytes).context("Failed to deserialize validate response")?;
 
         Ok(response)
     }

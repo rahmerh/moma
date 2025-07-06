@@ -36,7 +36,8 @@ pub async fn resolve_api_key() -> anyhow::Result<String> {
                 api_key = res.key;
                 break;
             }
-            Err(_) => {
+            Err(e) => {
+                log::debug!("Error: {}", e);
                 println!("{}", "Invalid API key, try again.".red().bold());
             }
         }
