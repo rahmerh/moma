@@ -181,36 +181,22 @@ mod tests {
         config::{Config, GameConfig},
         games::Game,
     };
-    use std::{collections::HashMap, fs::File, os::unix::fs::PermissionsExt};
+    use std::{fs::File, os::unix::fs::PermissionsExt};
     use tempfile::TempDir;
 
     fn setup(game: &Game) -> anyhow::Result<Workspace> {
         let tmp_dir = TempDir::new()?;
 
-        let work_dir = tmp_dir.path().join("working");
-        let steam_dir = tmp_dir.path().join("steam");
-        let state_file = tmp_dir.path().join("unit-test-state");
-
-        let mut games: HashMap<String, GameConfig> = HashMap::new();
-
-        games.insert(
-            game.id().to_string(),
-            GameConfig {
-                name: "skyrimse".to_string(),
-                path: PathBuf::from("/fake/skyrimse"),
-                proton_dir: PathBuf::from("/fake/proton"),
-                env: None,
-                sources: vec![],
-            },
-        );
-
-        let config: Config = Config {
-            games,
-            work_dir,
-            steam_dir: Some(steam_dir),
-            nexus_api_key: Some("api_key".to_string()),
-            state_file,
+        let game_config = GameConfig {
+            game: game.clone(),
+            path: PathBuf::from("/fake/skyrimse"),
+            proton_dir: PathBuf::from("/fake/proton"),
+            env: None,
+            sources: vec![],
         };
+
+        let mut config = Config::test(tmp_dir.path().to_owned());
+        config.add_game_config(game_config)?;
 
         Workspace::new(game, &config)
     }
@@ -236,6 +222,7 @@ mod tests {
     fn read_should_return_mod_list_if_file_exists() -> anyhow::Result<()> {
         // Arrange
         let ws = setup(&Game::SkyrimSE)?;
+        println!("Here");
         ws.prepare_file_system()?;
         let sut = ModListStore::new(ws.clone());
 

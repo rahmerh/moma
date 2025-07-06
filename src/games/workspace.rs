@@ -136,7 +136,6 @@ impl Workspace {
 mod tests {
     use super::*;
     use anyhow::bail;
-    use std::collections::HashMap;
     use tempfile::TempDir;
     use walkdir::{DirEntry, WalkDir};
 
@@ -157,30 +156,16 @@ mod tests {
     fn setup(game: &Game) -> anyhow::Result<Config> {
         let tmp_dir = TempDir::new()?;
 
-        let work_dir = tmp_dir.path().join("working");
-        let steam_dir = tmp_dir.path().join("steam");
-        let state_file = tmp_dir.path().join("unit-test-state");
-
-        let mut games: HashMap<String, GameConfig> = HashMap::new();
-
-        games.insert(
-            game.id().to_string(),
-            GameConfig {
-                game: game.clone(),
-                path: PathBuf::from("/fake/skyrimse"),
-                proton_dir: PathBuf::from("/fake/proton"),
-                env: None,
-                sources: vec![],
-            },
-        );
-
-        let config: Config = Config {
-            games,
-            work_dir,
-            steam_dir: steam_dir,
-            nexus_api_key: Some("api_key".to_string()),
-            state_file,
+        let game_config = GameConfig {
+            game: game.clone(),
+            path: PathBuf::from("/fake/skyrimse"),
+            proton_dir: PathBuf::from("/fake/proton"),
+            env: None,
+            sources: vec![],
         };
+
+        let mut config = Config::test(tmp_dir.path().to_owned());
+        config.add_game_config(game_config)?;
 
         Ok(config)
     }
@@ -188,13 +173,7 @@ mod tests {
     #[test]
     fn new_should_return_err_when_game_config_non_existant() {
         // Arrange
-        let config: Config = Config {
-            games: HashMap::new(),
-            work_dir: PathBuf::from("test"),
-            steam_dir: PathBuf::from("test"),
-            nexus_api_key: Some("api_key".to_string()),
-            state_file: PathBuf::from("test"),
-        };
+        let config: Config = Config::test(TempDir::new().unwrap().path().to_owned());
 
         // Act
         let result = Workspace::new(&Game::SkyrimSE, &config);
@@ -215,7 +194,10 @@ mod tests {
         let actual = sut.active_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()).join(ACTIVE));
+        assert_eq!(
+            actual,
+            config.base_working_dir().join(game.id()).join(ACTIVE)
+        );
 
         Ok(())
     }
@@ -234,7 +216,11 @@ mod tests {
         // Assert
         assert_eq!(
             actual,
-            config.work_dir.join(game.id()).join(CACHE).join(TRACKING)
+            config
+                .base_working_dir()
+                .join(game.id())
+                .join(CACHE)
+                .join(TRACKING)
         );
 
         Ok(())
@@ -252,7 +238,10 @@ mod tests {
         let actual = sut.overlay_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()).join(OVERLAY));
+        assert_eq!(
+            actual,
+            config.base_working_dir().join(game.id()).join(OVERLAY)
+        );
 
         Ok(())
     }
@@ -271,7 +260,11 @@ mod tests {
         // Assert
         assert_eq!(
             actual,
-            config.work_dir.join(game.id()).join(OVERLAY).join(MERGED)
+            config
+                .base_working_dir()
+                .join(game.id())
+                .join(OVERLAY)
+                .join(MERGED)
         );
 
         Ok(())
@@ -291,7 +284,11 @@ mod tests {
         // Assert
         assert_eq!(
             actual,
-            config.work_dir.join(game.id()).join(OVERLAY).join(WORK)
+            config
+                .base_working_dir()
+                .join(game.id())
+                .join(OVERLAY)
+                .join(WORK)
         );
 
         Ok(())
@@ -309,7 +306,10 @@ mod tests {
         let actual = sut.cache_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()).join(CACHE));
+        assert_eq!(
+            actual,
+            config.base_working_dir().join(game.id()).join(CACHE)
+        );
 
         Ok(())
     }
@@ -326,7 +326,7 @@ mod tests {
         let actual = sut.mods_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()).join(MODS));
+        assert_eq!(actual, config.base_working_dir().join(game.id()).join(MODS));
 
         Ok(())
     }
@@ -343,7 +343,7 @@ mod tests {
         let actual = sut.game_dir();
 
         // Assert
-        let expected = config.games.get(game.id()).unwrap().path.clone();
+        let expected = config.game_config_for(&game).unwrap().path.clone();
 
         assert_eq!(actual, expected);
 
@@ -362,7 +362,10 @@ mod tests {
         let actual = sut.staging_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()).join(STAGING));
+        assert_eq!(
+            actual,
+            config.base_working_dir().join(game.id()).join(STAGING)
+        );
 
         Ok(())
     }
@@ -379,7 +382,7 @@ mod tests {
         let actual = sut.sink_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()).join(SINK));
+        assert_eq!(actual, config.base_working_dir().join(game.id()).join(SINK));
 
         Ok(())
     }
@@ -396,7 +399,10 @@ mod tests {
         let actual = sut.proton_work_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()).join(PROTON));
+        assert_eq!(
+            actual,
+            config.base_working_dir().join(game.id()).join(PROTON)
+        );
 
         Ok(())
     }
@@ -414,8 +420,7 @@ mod tests {
 
         // Assert
         let expected = config
-            .games
-            .get(game.id())
+            .game_config_for(&game)
             .unwrap()
             .proton_dir
             .clone()
@@ -438,7 +443,7 @@ mod tests {
         let actual = sut.work_dir();
 
         // Assert
-        assert_eq!(actual, config.work_dir.join(game.id()));
+        assert_eq!(actual, config.base_working_dir().join(game.id()));
 
         Ok(())
     }
@@ -457,7 +462,7 @@ mod tests {
         // Assert
         assert!(result.is_ok());
 
-        let actual: Vec<DirEntry> = WalkDir::new(&config.work_dir.parent().unwrap())
+        let actual: Vec<DirEntry> = WalkDir::new(&config.base_working_dir().parent().unwrap())
             .into_iter()
             .filter_map(Result::ok)
             .filter(|d| is_leaf(d).is_ok())

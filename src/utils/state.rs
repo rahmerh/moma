@@ -131,7 +131,7 @@ mod tests {
         let sut = State::new(state_file_path);
 
         // Act
-        let result = sut.set_context(Game::SkyrimSE);
+        let result = sut.set_context(&Game::SkyrimSE);
 
         // Assert
         assert!(result.is_ok());
@@ -146,7 +146,7 @@ mod tests {
         let sut = State::new(state_file_path.clone());
 
         // Act
-        sut.set_context(Game::SkyrimSE).unwrap();
+        sut.set_context(&Game::SkyrimSE).unwrap();
 
         // Assert
         let actual = fs::read_to_string(state_file_path).unwrap();

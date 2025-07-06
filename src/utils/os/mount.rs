@@ -49,7 +49,7 @@ impl<'a> Mountable for OverlayMounter<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, path::PathBuf};
+    use std::path::PathBuf;
 
     use tempfile::TempDir;
 
@@ -62,30 +62,18 @@ mod tests {
     use super::*;
 
     fn setup_workspace(game: &Game) -> (Workspace, MockSystemInterface) {
-        let temp_dir = TempDir::new().unwrap();
-        let work_dir = temp_dir.path().join("working");
-        let steam_dir = temp_dir.path().join("steam");
-        let state_file = temp_dir.path().join("test-state");
+        let tmp_dir = TempDir::new().unwrap();
 
-        let mut games = HashMap::new();
-        games.insert(
-            game.id().to_string(),
-            GameConfig {
-                game: game.clone(),
-                path: PathBuf::from("/fake/game"),
-                proton_dir: PathBuf::from("/fake/proton"),
-                env: None,
-                sources: vec![],
-            },
-        );
-
-        let config = Config {
-            games,
-            work_dir,
-            steam_dir: Some(steam_dir),
-            nexus_api_key: Some("abc".to_string()),
-            state_file,
+        let game_config = GameConfig {
+            game: game.clone(),
+            path: PathBuf::from("/fake/skyrimse"),
+            proton_dir: PathBuf::from("/fake/proton"),
+            env: None,
+            sources: vec![],
         };
+
+        let mut config = Config::test(tmp_dir.path().to_owned());
+        config.add_game_config(game_config).unwrap();
 
         let workspace = Workspace::new(game, &config).unwrap();
         workspace.prepare_file_system().unwrap();

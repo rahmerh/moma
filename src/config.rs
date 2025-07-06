@@ -189,3 +189,15 @@ impl Default for Config {
         }
     }
 }
+
+#[cfg(test)]
+impl Config {
+    pub fn test(work_dir: PathBuf) -> Self {
+        Self {
+            games: HashMap::new(),
+            steam_dir: work_dir.join("steam"),
+            state_file: work_dir.join("state.json"),
+            work_dir: work_dir.join("working"),
+        }
+    }
+}

@@ -94,3 +94,47 @@ impl DownloadTracker {
             .join(format!("{}.json", file_uid.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        config::{Config, GameConfig},
+        games::Game,
+    };
+    use tempfile::TempDir;
+
+    fn setup_workspace() -> anyhow::Result<Workspace> {
+        let tmp_dir = TempDir::new()?;
+
+        let game = Game::SkyrimSE;
+        let game_config = GameConfig {
+            game: game.clone(),
+            path: PathBuf::from("/fake/skyrimse"),
+            proton_dir: PathBuf::from("/fake/proton"),
+            env: None,
+            sources: vec![],
+        };
+
+        let mut config = Config::test(tmp_dir.path().to_owned());
+        config.add_game_config(game_config)?;
+
+        Workspace::new(&game, &config)
+    }
+
+    #[test]
+    fn tracking_file_should_return_correct_path() -> anyhow::Result<()> {
+        // Arrange
+        let workspace = setup_workspace()?;
+        let mod_list_store = ModListStore::new(workspace.clone());
+        let sut = DownloadTracker::new(workspace.clone(), mod_list_store);
+
+        // Act
+        let actual = sut.tracking_file(1);
+
+        // Assert
+        assert_eq!(actual, workspace.tracking_dir().join("1.json"));
+
+        Ok(())
+    }
+}
