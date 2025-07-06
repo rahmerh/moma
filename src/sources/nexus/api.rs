@@ -4,6 +4,7 @@ use reqwest::Url;
 
 use crate::{
     games::Game,
+    mods::download_tracker::DownloadTracker,
     sources::nexus::{client::NexusClient, config::Config, types::DownloadInfoRequest},
     types::{Mod, ModArchive},
 };
@@ -34,9 +35,9 @@ pub struct Nexus {
 }
 
 impl Nexus {
-    pub fn new(config: &Config) -> anyhow::Result<Self> {
+    pub fn new(config: &Config, download_tracker: DownloadTracker) -> anyhow::Result<Self> {
         Ok(Self {
-            client: NexusClient::new(config)?,
+            client: NexusClient::new(config, download_tracker)?,
         })
     }
 

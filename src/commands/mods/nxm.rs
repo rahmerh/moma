@@ -39,7 +39,7 @@ impl NxmHandler {
         let mod_list_store = ModListStore::new(workspace.clone());
         let download_tracker = DownloadTracker::new(workspace, mod_list_store.clone());
 
-        let api = nexus::Nexus::new(&nexus_config)?;
+        let api = nexus::Nexus::new(&nexus_config, download_tracker.clone())?;
 
         let mod_info = api.get_mod_info(&game, &parsed.mod_id).await?;
         let file_info_result = api

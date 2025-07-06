@@ -1,21 +1,15 @@
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::{Path, PathBuf},
-    time::{Instant, SystemTime, UNIX_EPOCH},
-};
-
 use anyhow::{Context, bail};
 use futures::TryStreamExt;
 use reqwest::{
     Client, Url,
     header::{self, HeaderMap, HeaderValue},
 };
-use tokio::io::AsyncReadExt;
+use std::path::PathBuf;
 use tokio_util::io::StreamReader;
 
 use crate::{
     games::Game,
+    mods::download_tracker::DownloadTracker,
     sources::nexus::{
         self,
         config::Config,
@@ -24,11 +18,11 @@ use crate::{
             ValidateResponse,
         },
     },
-    types::DownloadProgress,
 };
 
 pub struct NexusClient {
     client: Client,
+    download_tracker: DownloadTracker,
     base_url: Url,
 }
 
@@ -36,7 +30,7 @@ pub const DEFAULT_NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 
 // Documentation: https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
 impl NexusClient {
-    pub fn new(config: &Config) -> anyhow::Result<Self> {
+    pub fn new(config: &Config, download_tracker: DownloadTracker) -> anyhow::Result<Self> {
         let api_key = config
             .api_key
             .as_ref()
@@ -51,6 +45,7 @@ impl NexusClient {
         Ok(Self {
             client,
             base_url: Url::parse(&base_url)?,
+            download_tracker,
         })
     }
 
@@ -172,63 +167,14 @@ impl NexusClient {
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)),
         );
 
-        self.stream_to_file_with_tracking(
-            stream,
-            &output_file,
-            total_size,
-            tracking_file.as_path(),
-            output_file.file_name().unwrap().display().to_string(),
-        )
-        .await
-    }
-
-    async fn stream_to_file_with_tracking<R: tokio::io::AsyncRead + Unpin>(
-        &self,
-        mut stream: R,
-        dest_path: &Path,
-        total_size: u64,
-        progress_file: &Path,
-        file_name: String,
-    ) -> anyhow::Result<()> {
-        let mut file = File::create(dest_path)?;
-        let mut buffer = [0u8; 8192];
-
-        let start_unix = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-        let mut downloaded: u64 = 0;
-        let mut last_written = Instant::now();
-
-        loop {
-            let read_bytes = stream.read(&mut buffer).await?;
-            if read_bytes == 0 {
-                break;
-            }
-
-            file.write_all(&buffer[..read_bytes])?;
-            downloaded += read_bytes as u64;
-
-            if last_written.elapsed().as_millis() > 500 {
-                let updated_at = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-
-                let progress = DownloadProgress {
-                    file_name: file_name.clone(),
-                    progress_bytes: downloaded,
-                    total_bytes: total_size,
-                    started_at: start_unix,
-                    updated_at,
-                };
-
-                fs::write(progress_file, serde_json::to_string_pretty(&progress)?)?;
-                last_written = Instant::now();
-            }
-        }
-
-        fs::remove_file(progress_file).with_context(|| {
-            format!(
-                "Failed to delete progress file '{}'",
-                progress_file.display()
+        self.download_tracker
+            .stream_to_file_with_tracking(
+                stream,
+                &output_file,
+                total_size,
+                tracking_file.as_path(),
+                output_file.file_name().unwrap().display().to_string(),
             )
-        })?;
-
-        Ok(())
+            .await
     }
 }
