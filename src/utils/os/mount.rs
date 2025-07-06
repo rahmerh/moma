@@ -71,7 +71,7 @@ mod tests {
         games.insert(
             game.id().to_string(),
             GameConfig {
-                name: game.id().to_string(),
+                game: game.clone(),
                 path: PathBuf::from("/fake/game"),
                 proton_dir: PathBuf::from("/fake/proton"),
                 env: None,

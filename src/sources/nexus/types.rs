@@ -15,8 +15,6 @@ pub struct DownloadInfoRequest {
 
 #[derive(Deserialize)]
 pub struct ValidateResponse {
-    pub name: String,
-    pub is_premium: bool,
     pub key: String,
 }
 

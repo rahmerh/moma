@@ -7,8 +7,6 @@ use crate::{cli::Cli, usage_for, utils::os::permissions};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub username: Option<String>,
-    pub is_premium: bool,
     pub api_key: Option<String>,
     pub base_url: Option<String>,
 }
@@ -79,8 +77,6 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            username: None,
-            is_premium: false,
             api_key: None,
             base_url: Some("https://api.nexusmods.com/v1/".to_string()),
         }
