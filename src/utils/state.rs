@@ -35,7 +35,7 @@ impl State {
         }
     }
 
-    pub fn set_context(&self, game: Game) -> anyhow::Result<()> {
+    pub fn set_context(&self, game: &Game) -> anyhow::Result<()> {
         fs::write(&self.state_file, game.id())?;
         Ok(())
     }
