@@ -6,7 +6,7 @@ use crate::{
     games::{Game, workspace::Workspace},
     mods::mod_list_store::ModListStore,
     types::{FileStatus, Mod},
-    ui::{prompt, reorder},
+    ui::prompt,
 };
 
 #[derive(Args)]
@@ -50,19 +50,7 @@ impl Install {
                     &mod_entry.archives,
                 )?;
 
-                let to_install = if selection.len() > 1 {
-                    println!(
-                        "\nMultiple archives selected. Order matters — each archive may overwrite files from the one before it.\nPlease arrange them in the desired installation order.\n"
-                    );
-
-                    let mut reordered = reorder::reorder_items(selection)?;
-                    reordered.reverse();
-                    reordered
-                } else {
-                    selection
-                };
-
-                archives_to_install.extend(to_install);
+                archives_to_install.extend(selection);
             } else {
                 archives_to_install.extend(mod_entry.archives.clone());
             }
@@ -86,6 +74,8 @@ impl Install {
 
             for archive in archives_to_install {
                 mod_list_store.install_archive(&mod_entry, &archive)?;
+
+                println!("Successfully installed '{}'", archive.file_name);
             }
         }
 

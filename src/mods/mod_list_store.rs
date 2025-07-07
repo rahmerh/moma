@@ -70,12 +70,17 @@ impl ModListStore {
         let mods_dir = self.workspace.mods_dir();
 
         // TODO: Detect if folder needs to be flattened
+        // TODO: Detect FOMOD
         let archive_path = match &archive.archive_path {
             Some(a) => a,
             None => bail!("No archive path found for: '{}'", archive.file_name),
         };
 
-        utils::fs::extract_archive(&archive_path, &mods_dir.join(m.uid.to_string()), false)?;
+        utils::fs::extract_archive(
+            &archive_path,
+            &mods_dir.join(archive.file_uid.to_string()),
+            false,
+        )?;
         fs::remove_file(&archive_path)?;
 
         self.update_archive(&m.uid, &archive.file_uid, |a| {
@@ -195,8 +200,7 @@ mod tests {
             sources: vec![],
         };
 
-        let mut config = Config::test(tmp_dir.path().to_owned());
-        config.add_game_config(game_config)?;
+        let config = Config::test_with_config(tmp_dir.path().to_owned(), game_config);
 
         Workspace::new(game, &config)
     }

@@ -192,6 +192,18 @@ impl Default for Config {
 
 #[cfg(test)]
 impl Config {
+    pub fn test_with_config(work_dir: PathBuf, game_config: GameConfig) -> Self {
+        let mut games = HashMap::new();
+        games.insert(game_config.game.id().to_string(), game_config);
+
+        Self {
+            games,
+            steam_dir: work_dir.join("steam"),
+            state_file: work_dir.join("state.json"),
+            work_dir: work_dir.join("working"),
+        }
+    }
+
     pub fn test(work_dir: PathBuf) -> Self {
         Self {
             games: HashMap::new(),

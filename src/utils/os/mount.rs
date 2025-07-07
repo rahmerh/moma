@@ -72,8 +72,7 @@ mod tests {
             sources: vec![],
         };
 
-        let mut config = Config::test(tmp_dir.path().to_owned());
-        config.add_game_config(game_config).unwrap();
+        let config = Config::test_with_config(tmp_dir.path().to_owned(), game_config);
 
         let workspace = Workspace::new(game, &config).unwrap();
         workspace.prepare_file_system().unwrap();
