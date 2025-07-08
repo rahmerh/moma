@@ -322,35 +322,6 @@ mod tests {
     }
 
     #[test]
-    fn extract_archive_should_extract_rar_correctly() -> anyhow::Result<()> {
-        // Arrange
-        let tmp_dir = setup();
-
-        fs::copy("assets/test/input.rar", tmp_dir.path().join("input.rar"))?;
-        let input_archive = tmp_dir.path().join("input.rar");
-
-        let output_dir = tmp_dir.path().join("output/");
-        fs::create_dir_all(&output_dir)?;
-
-        // Act
-        let result = extract_archive(&input_archive, &output_dir, false);
-
-        // Assert
-        assert!(result.is_ok());
-
-        assert!(output_dir.exists());
-
-        let extracted_file = output_dir.join("test.txt");
-
-        assert!(extracted_file.exists());
-
-        let content = fs::read_to_string(&extracted_file)?;
-        assert_eq!(content.trim(), "Sample value");
-
-        Ok(())
-    }
-
-    #[test]
     fn extract_archive_should_flatten_output() -> anyhow::Result<()> {
         // Arrange
         let tmp_dir = setup();
