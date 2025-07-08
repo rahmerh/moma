@@ -84,9 +84,10 @@ Stored in `/tmp/moma_state`, resets on reboot or when changed manually.
 ## Roadmap
 
 ### In progress
-Load order management 
+Rework CLI tool (clear up all code written without knowledge of rust)
 
 ### Planned
+- Load order management 
 - Persist, warn and handle sink directory (mod config files/runtime writes)
 - Automatic read and validation of extracted mod archives
 - Standardized prints and workflows
