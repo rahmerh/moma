@@ -6,7 +6,7 @@ use crate::{config::Config, games::Game};
 pub struct Uninstall;
 
 impl Uninstall {
-    pub fn run(&self, config: &Config, current_game: &Game) -> anyhow::Result<()> {
+    pub fn run(&self, _config: &Config, _current_game: &Game) -> anyhow::Result<()> {
         Ok(())
     }
 }

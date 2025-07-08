@@ -2,9 +2,7 @@ use std::{io, process::Command};
 
 use anyhow::Context;
 use libc::CLONE_NEWNS;
-use mockall::automock;
 
-#[automock]
 pub trait SystemInterface {
     fn run_command(&self, cmd: &mut Command) -> anyhow::Result<()>;
     fn unshare_namespace(&self) -> anyhow::Result<()>;

@@ -1,4 +1,3 @@
-use anyhow::Context;
 use std::{
     fs::{self, File},
     io::{ErrorKind, Write},
