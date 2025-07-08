@@ -17,7 +17,7 @@ pub struct ModArchive {
     pub status: FileStatus,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum FileStatus {
     Unknown,

@@ -5,7 +5,7 @@ use crate::{
     config::Config,
     games::workspace::Workspace,
     mods::{download_tracker::DownloadTracker, mod_list_store::ModListStore},
-    sources::nexus::{self, Nexus},
+    sources::nexus::{self},
     types::FileStatus,
     ui::notify,
     usage_for,
@@ -18,16 +18,19 @@ pub struct NxmHandler {
 
 impl NxmHandler {
     pub async fn run(&self, config: &Config) -> anyhow::Result<()> {
-        if !Nexus::is_setup() {
-            let message = &format!(
-                "Nexus connection is not set up. Run '{}'",
-                usage_for!("connect")
-            );
-            notify::send_notification(message)?;
-            bail!("{message}");
-        }
+        let nexus_config = match nexus::Config::load() {
+            Ok(config) => config,
+            Err(_) => {
+                let message = &format!(
+                    "Nexus connection is not set up. Run '{}'",
+                    usage_for!("connect")
+                );
+                notify::send_notification(message)?;
+                bail!("{message}");
+            }
+        };
 
-        let parsed = Nexus::parse_nxm_url(&self.url)?;
+        let parsed = nexus::parse_nxm_url(&self.url)?;
 
         let domain = &parsed.game;
         let game = nexus::from_nexus_domain(domain)?;
@@ -36,9 +39,12 @@ impl NxmHandler {
         let mod_list_store = ModListStore::new(workspace.clone());
         let download_tracker = DownloadTracker::new(workspace, mod_list_store.clone());
 
-        let mod_info = Nexus::get_mod_info(&game, &parsed.mod_id).await?;
-        let file_info_result =
-            Nexus::get_mod_file_info(&game, &parsed.mod_id, &parsed.file_id).await;
+        let api = nexus::Nexus::new(&nexus_config, download_tracker.clone())?;
+
+        let mod_info = api.get_mod_info(&game, &parsed.mod_id).await?;
+        let file_info_result = api
+            .get_mod_file_info(&game, &parsed.mod_id, &parsed.file_id)
+            .await;
         let mut file_info = match file_info_result {
             Ok(i) => i,
             Err(err) => {
@@ -81,7 +87,7 @@ impl NxmHandler {
                 }
             };
         }
-        let archive_path = mod_list_store.archive_dest(&file_info.file_name);
+        let archive_path = mod_list_store.archive_download_dest(&file_info.file_name);
 
         file_info.status = FileStatus::Downloading;
         file_info.archive_path = Some(archive_path.clone());
@@ -98,9 +104,10 @@ impl NxmHandler {
                 )
             })?;
 
-        let download_link = Nexus::get_download_link(&parsed).await?;
-        let download_result =
-            Nexus::download_file(&download_link, &archive_path, &tracking_file).await;
+        let download_link = api.get_download_link(&parsed).await?;
+        let download_result = api
+            .download_file(&download_link, &archive_path, &tracking_file)
+            .await;
 
         match download_result {
             Ok(()) => {

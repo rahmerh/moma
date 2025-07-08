@@ -1,21 +1,15 @@
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::{Path, PathBuf},
-    time::{Instant, SystemTime, UNIX_EPOCH},
-};
-
 use anyhow::{Context, bail};
 use futures::TryStreamExt;
 use reqwest::{
     Client, Url,
     header::{self, HeaderMap, HeaderValue},
 };
-use tokio::io::AsyncReadExt;
+use std::path::PathBuf;
 use tokio_util::io::StreamReader;
 
 use crate::{
     games::Game,
+    mods::download_tracker::DownloadTracker,
     sources::nexus::{
         self,
         config::Config,
@@ -24,57 +18,69 @@ use crate::{
             ValidateResponse,
         },
     },
-    types::DownloadProgress,
 };
-
-const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 
 pub struct NexusClient {
     client: Client,
+    download_tracker: DownloadTracker,
+    base_url: Url,
 }
+
+pub const DEFAULT_NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1/";
 
 // Documentation: https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
 impl NexusClient {
-    pub fn new(config: &Config) -> anyhow::Result<Self> {
+    pub fn new(config: &Config, download_tracker: DownloadTracker) -> anyhow::Result<Self> {
         let api_key = config
             .api_key
             .as_ref()
             .with_context(|| "Nexus API key not set")?;
-        Self::with_key(api_key)
+
+        let client = Self::create_client_with_api_key(api_key)?;
+        let base_url = config
+            .base_url
+            .clone()
+            .unwrap_or_else(|| DEFAULT_NEXUS_BASE_URL.to_string());
+
+        Ok(Self {
+            client,
+            base_url: Url::parse(&base_url)?,
+            download_tracker,
+        })
     }
 
-    fn with_key(api_key: &str) -> anyhow::Result<Self> {
+    fn create_client_with_api_key(api_key: &str) -> anyhow::Result<Client> {
         let mut headers = HeaderMap::new();
 
         headers.insert("apikey", HeaderValue::from_str(api_key.trim())?);
         headers.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
 
-        let client = Client::builder()
+        Client::builder()
             .default_headers(headers)
             .build()
-            .context("Failed to build HTTP client")?;
-
-        Ok(Self { client })
+            .context("Failed to build HTTP client")
     }
 
-    pub async fn validate_key(api_key: &str) -> anyhow::Result<ValidateResponse> {
-        let client = Self::with_key(api_key)?;
-        client.validate().await
-    }
+    pub async fn validate_key(api_key: &str, base_url: Url) -> anyhow::Result<ValidateResponse> {
+        let client = Self::create_client_with_api_key(api_key)?;
 
-    pub async fn validate(&self) -> anyhow::Result<ValidateResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?.join("users/validate.json")?;
+        let res = client
+            .get(base_url.join("users/validate.json")?)
+            .send()
+            .await?;
 
-        let res = self.client.get(url).send().await?;
+        let status = res.status();
+        let bytes = res.bytes().await?;
 
-        if !res.status().is_success() {
+        log::debug!("Validate response: {}", String::from_utf8_lossy(&bytes));
+
+        if !status.is_success() {
             bail!("Invalid API key or access denied");
         }
 
-        let response: ValidateResponse = res
-            .json()
-            .await
-            .context("Failed to deserialize validate response")?;
+        let response: ValidateResponse =
+            serde_json::from_slice(&bytes).context("Failed to deserialize validate response")?;
+
         Ok(response)
     }
 
@@ -82,7 +88,8 @@ impl NexusClient {
         &self,
         request: DownloadInfoRequest,
     ) -> anyhow::Result<DownloadInfoResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?
+        let url = self
+            .base_url
             .join("games/")?
             .join(&format!("{}/", request.game))?
             .join("mods/")?
@@ -110,7 +117,8 @@ impl NexusClient {
     }
 
     pub async fn get_mod_info(&self, game: &Game, mod_id: &str) -> anyhow::Result<ModInfoResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?
+        let url = self
+            .base_url
             .join("games/")?
             .join(&format!("{}/", nexus::to_nexus_domain(game)?))?
             .join("mods/")?
@@ -129,7 +137,8 @@ impl NexusClient {
         mod_id: &str,
         file_id: &str,
     ) -> anyhow::Result<ModFileInfoResponse> {
-        let url = Url::parse(NEXUS_BASE_URL)?
+        let url = self
+            .base_url
             .join("games/")?
             .join(&format!("{}/", nexus::to_nexus_domain(game)?))?
             .join("mods/")?
@@ -158,63 +167,14 @@ impl NexusClient {
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)),
         );
 
-        self.stream_to_file_with_tracking(
-            stream,
-            &output_file,
-            total_size,
-            tracking_file.as_path(),
-            output_file.file_name().unwrap().display().to_string(),
-        )
-        .await
-    }
-
-    async fn stream_to_file_with_tracking<R: tokio::io::AsyncRead + Unpin>(
-        &self,
-        mut stream: R,
-        dest_path: &Path,
-        total_size: u64,
-        progress_file: &Path,
-        file_name: String,
-    ) -> anyhow::Result<()> {
-        let mut file = File::create(dest_path)?;
-        let mut buffer = [0u8; 8192];
-
-        let start_unix = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-        let mut downloaded: u64 = 0;
-        let mut last_written = Instant::now();
-
-        loop {
-            let read_bytes = stream.read(&mut buffer).await?;
-            if read_bytes == 0 {
-                break;
-            }
-
-            file.write_all(&buffer[..read_bytes])?;
-            downloaded += read_bytes as u64;
-
-            if last_written.elapsed().as_millis() > 500 {
-                let updated_at = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-
-                let progress = DownloadProgress {
-                    file_name: file_name.clone(),
-                    progress_bytes: downloaded,
-                    total_bytes: total_size,
-                    started_at: start_unix,
-                    updated_at,
-                };
-
-                fs::write(progress_file, serde_json::to_string_pretty(&progress)?)?;
-                last_written = Instant::now();
-            }
-        }
-
-        fs::remove_file(progress_file).with_context(|| {
-            format!(
-                "Failed to delete progress file '{}'",
-                progress_file.display()
+        self.download_tracker
+            .stream_to_file_with_tracking(
+                stream,
+                &output_file,
+                total_size,
+                tracking_file.as_path(),
+                output_file.file_name().unwrap().display().to_string(),
             )
-        })?;
-
-        Ok(())
+            .await
     }
 }

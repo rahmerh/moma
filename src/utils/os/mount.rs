@@ -1,61 +1,48 @@
-use std::{io, process::Command};
+use crate::{games::workspace::Workspace, utils::os::system_interface::SystemInterface};
+use std::process::Command;
 
-use anyhow::Context;
-use libc::CLONE_NEWNS;
+pub trait Mountable {
+    fn mount_overlay(&self) -> anyhow::Result<()>;
+    fn unshare_as_private_namespace(&self) -> anyhow::Result<()>;
+}
 
-use crate::games::workspace::Workspace;
+pub struct OverlayMounter<'a> {
+    workspace: &'a Workspace,
+    system: &'a dyn SystemInterface,
+}
 
-pub fn mount_overlay_for(workspace: &Workspace) -> anyhow::Result<()> {
-    log::debug!(
-        "lowerdir={}:{},upperdir={},workdir={}",
-        workspace.overlay_merged_dir().display(),
-        workspace.game_dir().display(),
-        workspace.sink_dir().display(),
-        workspace.overlay_work_dir().display(),
-    );
+impl<'a> OverlayMounter<'a> {
+    pub fn new(workspace: &'a Workspace, system: &'a dyn SystemInterface) -> Self {
+        Self { workspace, system }
+    }
+}
 
-    Command::new("mount")
-        .args([
+impl<'a> Mountable for OverlayMounter<'a> {
+    fn mount_overlay(&self) -> anyhow::Result<()> {
+        let mut cmd = Command::new("mount");
+        cmd.args([
             "-t",
             "overlay",
             "overlay",
             "-o",
             &format!(
                 "lowerdir={}:{},upperdir={},workdir={}",
-                workspace.overlay_merged_dir().display(),
-                workspace.game_dir().display(),
-                workspace.sink_dir().display(),
-                workspace.overlay_work_dir().display(),
+                self.workspace.overlay_merged_dir().display(),
+                self.workspace.game_dir().display(),
+                self.workspace.sink_dir().display(),
+                self.workspace.overlay_work_dir().display(),
             ),
-            workspace.active_dir().to_str().unwrap(),
-        ])
-        .status()
-        .with_context(|| "Overlay mount failed")?
-        .success()
-        .then_some(())
-        .ok_or_else(|| anyhow::anyhow!("Failed to mount overlay"))?;
+            self.workspace.active_dir().to_str().unwrap(),
+        ]);
 
-    Ok(())
-}
-
-pub fn unshare_current_namespace() -> anyhow::Result<()> {
-    let result = unsafe { libc::unshare(CLONE_NEWNS) };
-
-    if result == -1 {
-        let errno = io::Error::last_os_error();
-        Err(anyhow::anyhow!("Failed to unshare namespace: {}", errno))
-            .with_context(|| "unshare(CLONE_NEWNS | CLONE_NEWPID) failed")
-    } else {
-        Ok(())
+        self.system.run_command(&mut cmd)
     }
-}
 
-pub fn remount_current_namespace_as_private() -> anyhow::Result<()> {
-    Command::new("mount")
-        .args(["--make-rprivate", "/"])
-        .status()
-        .with_context(|| "Failed to set mount propagation to private")?
-        .success()
-        .then_some(())
-        .ok_or_else(|| anyhow::anyhow!("mount --make-rprivate / failed"))
+    fn unshare_as_private_namespace(&self) -> anyhow::Result<()> {
+        self.system.unshare_namespace()?;
+
+        let mut cmd = Command::new("mount");
+        cmd.args(["--make-rprivate", "/"]);
+        self.system.run_command(&mut cmd)
+    }
 }

@@ -1,41 +1,52 @@
-use std::{fs, path::Path};
+use std::{fs, path::PathBuf};
 
 use anyhow::{Context, bail};
 
 use crate::games::Game;
 
-pub const STATE_FILE_PATH: &str = "/tmp/moma_state";
+pub const DEFAULT_STATE_FILE_PATH: &str = "/tmp/moma_state";
 
-pub fn current_context(state_file: &Path) -> anyhow::Result<Option<Game>> {
-    if !state_file.exists() {
-        return Ok(None);
+pub struct State {
+    state_file: PathBuf,
+}
+
+impl State {
+    pub fn new(state_file: PathBuf) -> Self {
+        Self { state_file }
     }
 
-    let contents = fs::read_to_string(state_file)
-        .with_context(|| format!("Failed to read state file '{}'", state_file.display()))?;
-    let trimmed = contents.trim();
+    pub fn current_context(&self) -> anyhow::Result<Option<Game>> {
+        if !self.state_file.exists() {
+            return Ok(None);
+        }
 
-    if trimmed.is_empty() {
-        Ok(None)
-    } else {
-        match Game::from_id(trimmed) {
-            Some(game) => Ok(Some(game)),
-            None => bail!("Invalid game context in state file: '{}'", trimmed),
+        let contents = fs::read_to_string(self.state_file.to_path_buf()).with_context(|| {
+            format!("Failed to read state file '{}'", self.state_file.display())
+        })?;
+        let trimmed = contents.trim();
+
+        if trimmed.is_empty() {
+            Ok(None)
+        } else {
+            match Game::from_id(trimmed) {
+                Some(game) => Ok(Some(game)),
+                None => bail!("Invalid game context in state file: '{}'", trimmed),
+            }
         }
     }
-}
 
-pub fn set_context(state_file: &Path, game: Game) -> anyhow::Result<()> {
-    fs::write(state_file, game.id())?;
-    Ok(())
-}
-
-pub fn clear_context(state_file: &Path) -> anyhow::Result<()> {
-    if state_file.exists() {
-        fs::remove_file(state_file).context("Could not remove state file")?;
+    pub fn set_context(&self, game: &Game) -> anyhow::Result<()> {
+        fs::write(&self.state_file, game.id())?;
+        Ok(())
     }
 
-    Ok(())
+    pub fn clear_context(&self) -> anyhow::Result<()> {
+        if self.state_file.exists() {
+            fs::remove_file(&self.state_file).context("Could not remove state file")?;
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -50,8 +61,11 @@ mod tests {
 
     #[test]
     fn current_context_should_return_none_when_state_file_is_non_existent() {
+        // Arrange
+        let sut = State::new(PathBuf::from("temp"));
+
         // Act
-        let context = current_context(&PathBuf::from("temp")).unwrap();
+        let context = sut.current_context().unwrap();
 
         // Assert
         assert!(context.is_none());
@@ -64,8 +78,10 @@ mod tests {
         let state_file_path = tmp_dir.path().join("state-file");
         fs::write(&state_file_path, "").unwrap();
 
+        let sut = State::new(state_file_path);
+
         // Act
-        let context = current_context(&state_file_path).unwrap();
+        let context = sut.current_context().unwrap();
 
         // Assert
         assert!(context.is_none());
@@ -78,8 +94,10 @@ mod tests {
         let state_file_path = tmp_dir.path().join("state-file");
         fs::write(&state_file_path, "invalid").unwrap();
 
+        let sut = State::new(state_file_path);
+
         // Act
-        let result = current_context(&state_file_path);
+        let result = sut.current_context();
 
         // Assert
         assert!(result.is_err());
@@ -94,8 +112,10 @@ mod tests {
         let state_file_path = tmp_dir.path().join("state-file");
         fs::write(&state_file_path, expected.id()).unwrap();
 
+        let sut = State::new(state_file_path);
+
         // Act
-        let result = current_context(&state_file_path).unwrap();
+        let result = sut.current_context().unwrap();
 
         // Assert
         assert!(result.is_some());
@@ -108,8 +128,10 @@ mod tests {
         let tmp_dir = setup();
         let state_file_path = tmp_dir.path().join("state-file");
 
+        let sut = State::new(state_file_path);
+
         // Act
-        let result = set_context(&state_file_path, Game::SkyrimSE);
+        let result = sut.set_context(&Game::SkyrimSE);
 
         // Assert
         assert!(result.is_ok());
@@ -121,8 +143,10 @@ mod tests {
         let tmp_dir = setup();
         let state_file_path = tmp_dir.path().join("state-file");
 
+        let sut = State::new(state_file_path.clone());
+
         // Act
-        set_context(&state_file_path, Game::SkyrimSE).unwrap();
+        sut.set_context(&Game::SkyrimSE).unwrap();
 
         // Assert
         let actual = fs::read_to_string(state_file_path).unwrap();
@@ -135,8 +159,10 @@ mod tests {
         let tmp_dir = setup();
         let state_file_path = tmp_dir.path().join("state-file");
 
+        let sut = State::new(state_file_path);
+
         // Act
-        let result = clear_context(&state_file_path);
+        let result = sut.clear_context();
 
         // Assert
         assert!(result.is_ok());
@@ -149,8 +175,10 @@ mod tests {
         let state_file_path = tmp_dir.path().join("state-file");
         fs::write(&state_file_path, Game::SkyrimSE.id()).unwrap();
 
+        let sut = State::new(state_file_path.clone());
+
         // Act
-        let result = clear_context(&state_file_path);
+        let result = sut.clear_context();
 
         // Assert
         assert!(result.is_ok());

@@ -3,6 +3,10 @@ name = "moma"
 version = "0.5.0"
 edition = "2024"
 
+[features]
+default = []
+unsafe = []
+
 [dependencies]
 anyhow = "1.0.98"
 clap = { version = "4.5.40", features = ["derive"] }
@@ -34,6 +38,7 @@ futures-util = "0.3.31"
 tokio-util = "0.7.15"
 zip = "4.2.0"
 unrar = "0.5.8"
+walkdir = "2.5.0"
 
 [dev-dependencies]
 tempfile = "3.20.0"

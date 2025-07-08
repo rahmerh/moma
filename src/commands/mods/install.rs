@@ -1,14 +1,12 @@
-use anyhow::bail;
 use clap::Args;
 use crossterm::style::Stylize;
 
 use crate::{
     config::Config,
-    games::workspace::Workspace,
+    games::{Game, workspace::Workspace},
     mods::mod_list_store::ModListStore,
     types::{FileStatus, Mod},
-    ui::{prompt, reorder},
-    utils::state,
+    ui::prompt,
 };
 
 #[derive(Args)]
@@ -18,12 +16,7 @@ pub struct Install {
 }
 
 impl Install {
-    pub fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let current_game = match state::current_context(&config.state_file)? {
-            Some(game) => game,
-            None => bail!("No game context set, please run 'moma context' first."),
-        };
-
+    pub fn run(&self, config: &Config, current_game: &Game) -> anyhow::Result<()> {
         let workspace = Workspace::new(&current_game, config)?;
         let mod_list_store = ModListStore::new(workspace);
         let mod_list = mod_list_store.read()?;
@@ -57,19 +50,7 @@ impl Install {
                     &mod_entry.archives,
                 )?;
 
-                let to_install = if selection.len() > 1 {
-                    println!(
-                        "\nMultiple archives selected. Order matters — each archive may overwrite files from the one before it.\nPlease arrange them in the desired installation order.\n"
-                    );
-
-                    let mut reordered = reorder::reorder_items(selection)?;
-                    reordered.reverse();
-                    reordered
-                } else {
-                    selection
-                };
-
-                archives_to_install.extend(to_install);
+                archives_to_install.extend(selection);
             } else {
                 archives_to_install.extend(mod_entry.archives.clone());
             }
@@ -93,6 +74,8 @@ impl Install {
 
             for archive in archives_to_install {
                 mod_list_store.install_archive(&mod_entry, &archive)?;
+
+                println!("Successfully installed '{}'", archive.file_name);
             }
         }
 

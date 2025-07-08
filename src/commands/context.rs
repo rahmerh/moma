@@ -1,23 +1,34 @@
 use clap::Args;
+use owo_colors::OwoColorize;
 
-use crate::{config::Config, games::Game, utils::state};
+use crate::{config::Config, games::Game, utils::state::State};
 
 #[derive(Args)]
 pub struct Context {
-    pub game: String,
+    pub game: Option<String>,
 }
 
 impl Context {
     pub fn run(&self, config: &Config) -> anyhow::Result<()> {
-        if self.game.to_lowercase() == "clear" {
-            state::clear_context(&config.state_file)?;
-            return Ok(());
-        }
+        let state = State::new(config.state_file());
 
-        let game = Game::from_id(&self.game)
-            .ok_or_else(|| anyhow::anyhow!("Unknown game '{}'", self.game))?;
+        let arg = match &self.game {
+            Some(g) => g,
+            None => {
+                state.clear_context()?;
+                return Ok(());
+            }
+        };
 
-        state::set_context(&config.state_file, game)?;
+        let game = Game::from_id(arg).ok_or_else(|| anyhow::anyhow!("Unknown game '{}'", arg))?;
+
+        state.set_context(&game)?;
+
+        println!(
+            "{} '{}'",
+            "Current context set to:".bold().underline().cyan(),
+            game.to_string().bold()
+        );
         Ok(())
     }
 }

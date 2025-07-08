@@ -1,5 +1,3 @@
-use std::io::stdout;
-
 use crossterm::{
     ExecutableCommand,
     cursor::MoveToColumn,
@@ -18,7 +16,7 @@ impl<T: AsRef<str>> Colorize for T {
 }
 
 pub fn print_inline_status(message: &str) -> anyhow::Result<()> {
-    let mut stdout = stdout();
+    let mut stdout = std::io::stdout();
     stdout
         .execute(MoveToColumn(0))?
         .execute(Clear(ClearType::CurrentLine))?
@@ -26,7 +24,7 @@ pub fn print_inline_status(message: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn hex_escape<T: AsRef<str>>(hex: &str, text: T) -> String {
+fn hex_escape<T: AsRef<str>>(hex: &str, text: T) -> String {
     let hex = hex.trim_start_matches('#');
     let text = text.as_ref();
 

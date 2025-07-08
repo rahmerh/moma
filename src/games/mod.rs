@@ -1,5 +1,6 @@
 use std::{fmt::Display, path::PathBuf};
 
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
 use crate::{config::Config, sources::Source, utils::fs::ExpandTilde};
@@ -7,7 +8,7 @@ use crate::{config::Config, sources::Source, utils::fs::ExpandTilde};
 pub mod skyrimse;
 pub mod workspace;
 
-#[derive(clap::ValueEnum, EnumIter, Clone)]
+#[derive(clap::ValueEnum, EnumIter, Clone, Serialize, Deserialize)]
 pub enum Game {
     SkyrimSE,
 }
@@ -35,13 +36,9 @@ impl Game {
     }
 
     pub fn default_game_path(&self, config: &Config) -> anyhow::Result<PathBuf> {
-        let steam_dir = config
-            .steam_dir
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("Could not read your Steam dir from config."))?;
-
         let path = match self {
-            Game::SkyrimSE => steam_dir
+            Game::SkyrimSE => config
+                .steam_dir()
                 .join("steamapps")
                 .join("common")
                 .join("Skyrim Special Edition"),
@@ -59,12 +56,6 @@ impl Game {
     pub fn game_mod_executable(&self) -> &'static str {
         match self {
             Game::SkyrimSE => skyrimse::game_mod_executable(),
-        }
-    }
-
-    pub fn work_dir(&self, config: &Config) -> PathBuf {
-        match self {
-            Game::SkyrimSE => config.work_dir.join(self.id()).expand(),
         }
     }
 

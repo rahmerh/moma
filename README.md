@@ -22,7 +22,7 @@ Moma is linux first, it skips all the Windows-based junk and uses native linux t
 
 - **One-command setup** – Automatically prepares your modding environment and config folders.
 - **Clean modded game launching** – Keep your base game untouched with isolated mod layers.
-- **Mod source integration** – Connect to sources like Nexus Mods with secure API key handling.
+- **Mod source integration** – Connect to sources like Nexus Mods for easy mod installation.
 - **Live download tracking** – Monitor active downloads with real-time progress and status.
 
 ## Installation
@@ -84,16 +84,15 @@ Stored in `/tmp/moma_state`, resets on reboot or when changed manually.
 ## Roadmap
 
 ### In progress
-(Unit) tests
+Load order management 
 
 ### Planned
 - Persist, warn and handle sink directory (mod config files/runtime writes)
 - Automatic read and validation of extracted mod archives
 - Standardized prints and workflows
+- Integration and e2e tests
 - TUI
-- Load order management 
 - FOMOD CLI wizard
-- Game file cache management
 - Proper error handling (remove anyhow crate)
 - Logging for debug purposes
 - Proper usage- and in depth documentation

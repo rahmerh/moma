@@ -19,17 +19,10 @@ impl Init {
     pub async fn run(&self, config: &mut Config) -> anyhow::Result<()> {
         println!("\n{}\n", "Moma initial setup".bold().underline().cyan());
 
-        if config.steam_dir.is_none() {
-            let steam_dir = config.resolve_steam_dir()?;
-
-            config.steam_dir = Some(steam_dir);
-            config.save()?;
-        }
-
         let all_games: Vec<Game> = Game::iter().collect();
         let game = prompt::select("Select game to initialize", &all_games)?;
 
-        if config.games.contains_key(game.id()) {
+        if config.game_config_for(&game).is_ok() {
             if !prompt::confirm(&format!(
                 "{} already setup, do you want to overwrite it?",
                 &game.to_string()
@@ -57,11 +50,6 @@ impl Init {
                 .collect::<Vec<_>>()
                 .join(", ")
         );
-        println!(
-            "Moma's game working directory: \"{}\"",
-            game.work_dir(&config).display()
-        );
-        println!();
 
         if !prompt::confirm("Do you want to save this configuration?")? {
             println!("{}", "Configuration not saved. Exiting.".yellow());
@@ -70,14 +58,13 @@ impl Init {
 
         let game_config = GameConfig {
             path: game_install_dir,
-            name: game.id().to_string(),
+            game: game.clone(),
             proton_dir,
             env: None,
             sources: sources,
         };
 
-        config.games.insert(game.id().to_string(), game_config);
-        config.save()?;
+        config.add_game_config(game_config)?;
 
         let workspace = Workspace::new(&game, config)?;
         workspace.prepare_file_system()?;
@@ -112,11 +99,7 @@ fn determine_game_installation_dir(game: &Game, config: &Config) -> anyhow::Resu
 }
 
 fn determine_proton(game: &Game, config: &Config) -> anyhow::Result<PathBuf> {
-    let steam_dir = config
-        .steam_dir
-        .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Could not read your Steam dir from config."))?;
-    let common_dir = steam_dir.join("steamapps/common");
+    let common_dir = config.steam_dir().join("steamapps/common");
 
     let entries = std::fs::read_dir(&common_dir)?
         .filter_map(Result::ok)
