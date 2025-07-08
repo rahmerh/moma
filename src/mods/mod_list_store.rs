@@ -81,11 +81,9 @@ impl ModListStore {
             &mods_dir.join(archive.file_uid.to_string()),
             false,
         )?;
-        fs::remove_file(&archive_path)?;
 
         self.update_archive(&m.uid, &archive.file_uid, |a| {
-            a.status = FileStatus::Installed;
-            a.archive_path = None;
+            a.status = FileStatus::Installed
         })?;
 
         Ok(())
