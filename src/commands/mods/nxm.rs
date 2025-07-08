@@ -6,7 +6,6 @@ use crate::{
     games::workspace::Workspace,
     mods::{download_tracker::DownloadTracker, mod_list_store::ModListStore},
     sources::nexus::{self},
-    types::FileStatus,
     ui::notify,
     usage_for,
 };

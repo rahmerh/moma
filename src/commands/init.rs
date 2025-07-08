@@ -3,6 +3,7 @@ use clap::Args;
 use owo_colors::OwoColorize;
 use std::path::PathBuf;
 use strum::IntoEnumIterator;
+use walkdir::WalkDir;
 
 use crate::{
     config::{Config, GameConfig},
@@ -22,14 +23,14 @@ impl Init {
         let all_games: Vec<Game> = Game::iter().collect();
         let game = prompt::select("Select game to initialize", &all_games)?;
 
-        if config.game_config_for(&game).is_ok() {
-            if !prompt::confirm(&format!(
+        if config.game_config_for(&game).is_ok()
+            && !prompt::confirm(&format!(
                 "{} already setup, do you want to overwrite it?",
                 &game.to_string()
-            ))? {
-                println!("{}", "Exiting setup.".yellow());
-                return Ok(());
-            }
+            ))?
+        {
+            println!("{}", "Exiting setup.".yellow());
+            return Ok(());
         }
 
         let game_install_dir = determine_game_installation_dir(&game, &config)?;
@@ -37,21 +38,7 @@ impl Init {
         let sources = determine_desired_sources(&game)
             .with_context(|| "Could not determine mod sources, please try again.")?;
 
-        println!();
-        println!("{}", "Configuration Summary".bold().cyan());
-        println!("Game: \"{}\"", &game.to_string().bold());
-        println!("Proton path: \"{}\"", &proton_dir.display().bold());
-        println!("Path: \"{}\"", game_install_dir.display().bold());
-        println!(
-            "Mod platforms: \"{}\"",
-            sources
-                .iter()
-                .map(|p| p.to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-
-        if !prompt::confirm("Do you want to save this configuration?")? {
+        if !prompt::confirm("Save?")? {
             println!("{}", "Configuration not saved. Exiting.".yellow());
             return Ok(());
         }
@@ -101,13 +88,19 @@ fn determine_game_installation_dir(game: &Game, config: &Config) -> anyhow::Resu
 fn determine_proton(game: &Game, config: &Config) -> anyhow::Result<PathBuf> {
     let common_dir = config.steam_dir().join("steamapps/common");
 
-    let entries = std::fs::read_dir(&common_dir)?
+    let entries = WalkDir::new(&common_dir)
+        .max_depth(1)
+        .into_iter()
         .filter_map(Result::ok)
-        .filter(|e| {
-            let fname = e.file_name().to_string_lossy().to_lowercase();
-            e.path().is_dir() && fname.contains("proton")
+        .filter(|entry| {
+            entry.file_type().is_dir()
+                && entry
+                    .file_name()
+                    .to_string_lossy()
+                    .to_lowercase()
+                    .contains("proton")
         })
-        .map(|e| e.path())
+        .map(|entry| entry.into_path())
         .collect::<Vec<_>>();
 
     let selected_proton =
@@ -126,7 +119,7 @@ fn determine_desired_sources(game: &Game) -> anyhow::Result<Vec<Source>> {
 
     let mut selected_platforms = prompt::select_multiple(
         &format!(
-            "Which mod platforms do you want to use for {}?",
+            "Which mod sources do you want to use for {}?",
             game.to_string()
         ),
         &supported,

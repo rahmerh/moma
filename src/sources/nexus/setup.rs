@@ -47,17 +47,6 @@ pub async fn resolve_api_key() -> anyhow::Result<String> {
 }
 
 pub fn configure_nxm_link_handler() -> anyhow::Result<()> {
-    println!(
-        "{}\n  {}\n  {}\n",
-        "Setting up NXM link handler:".cyan().bold(),
-        "- Copying moma-nxm-handler.desktop to ~/.local/share/applications".italic(),
-        "- Running: xdg-mime default moma-nxm-handler.desktop x-scheme-handler/nxm".italic()
-    );
-
-    if !prompt::confirm("Continue?")? {
-        return Ok(());
-    }
-
     let desktop_file = include_str!("../../assets/moma-nxm.desktop");
     let local_share = dirs_next::data_dir().unwrap_or_else(|| PathBuf::from("~/.local/share"));
     let desktop_path = local_share.join("applications/moma-nxm-handler.desktop");
@@ -117,11 +106,5 @@ pub fn from_nexus_domain(domain: &str) -> anyhow::Result<Game> {
             Game::from_id("skyrimse").ok_or_else(|| anyhow::anyhow!("Invalid internal game ID"))
         }
         _ => bail!("Unsupported game domain: {}", domain),
-    }
-}
-
-pub fn to_nexus_domain(game: &Game) -> anyhow::Result<&'static str> {
-    match game {
-        Game::SkyrimSE => Ok("skyrimspecialedition"),
     }
 }

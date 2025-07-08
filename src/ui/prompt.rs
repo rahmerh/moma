@@ -61,7 +61,7 @@ pub fn password(prompt: &str) -> anyhow::Result<String> {
 pub fn select<T: Display + Clone>(prompt: &str, options: &[T]) -> anyhow::Result<T> {
     let theme = crate::ui::theme::default_theme();
 
-    println!("{}", prompt.bold().cyan());
+    println!("\n{}", prompt.bold().cyan());
 
     let index = Select::with_theme(&theme)
         .items(options)
@@ -96,7 +96,6 @@ pub fn select_path(prompt: &str, entries: Vec<PathBuf>) -> anyhow::Result<PathBu
 
     let index = Select::with_theme(&theme)
         .items(&labels)
-        .report(false)
         .default(0)
         .interact()?;
 

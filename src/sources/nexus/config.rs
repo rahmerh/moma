@@ -53,9 +53,7 @@ impl Config {
 
         let toml = toml::to_string_pretty(self).unwrap();
 
-        fs::write(&path, toml)
-            .with_context(|| format!("Could not write to '{}'", path.display()))?;
-        permissions::chown_dir(&parent, true)
+        fs::write(&path, toml).with_context(|| format!("Could not write to '{}'", path.display()))
     }
 
     pub fn save_api_key(api_key: &String) -> anyhow::Result<()> {

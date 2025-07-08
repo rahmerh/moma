@@ -1,21 +1,8 @@
-use std::fmt::{self, Display};
-
-use serde::{Deserialize, Serialize};
-use strum_macros::EnumIter;
+use crate::bundles::types::Bundle;
 
 pub mod nexus;
 
-#[derive(clap::ValueEnum, Clone, Serialize, Deserialize, EnumIter)]
-pub enum Source {
-    Nexus,
-}
-
-impl Display for Source {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name = match self {
-            Source::Nexus => "Nexus",
-        };
-
-        write!(f, "{}", name)
-    }
+trait Source {
+    async fn setup_source() -> anyhow::Result<()>;
+    fn bundle_info_for(bundle_uid: u64) -> anyhow::Result<Bundle>;
 }
