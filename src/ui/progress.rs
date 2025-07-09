@@ -4,8 +4,6 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-use crate::types::DownloadProgress;
-
 pub fn display_active_downloads(tracking_dir: &Path) -> anyhow::Result<()> {
     let mp = MultiProgress::new();
     let pb_style = ProgressStyle::default_bar()

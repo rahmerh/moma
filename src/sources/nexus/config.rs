@@ -41,11 +41,16 @@ impl Config {
         Ok(config)
     }
 
-    pub fn save(&self) -> anyhow::Result<()> {
+    pub fn update<F>(&mut self, updater: F) -> anyhow::Result<()>
+    where
+        F: FnOnce(&mut Config),
+    {
         let path = match crate::config::Config::resolve_config_file_path(CONFIG_FILE_NAME) {
             Some(path) => path,
             None => bail!("Failed to resolve config path"),
         };
+
+        updater(self);
 
         let parent = path.parent().unwrap();
 
@@ -54,21 +59,6 @@ impl Config {
         let toml = toml::to_string_pretty(self).unwrap();
 
         fs::write(&path, toml).with_context(|| format!("Could not write to '{}'", path.display()))
-    }
-
-    pub fn save_api_key(api_key: &String) -> anyhow::Result<()> {
-        let path = crate::config::Config::resolve_config_file_path(API_KEY_FILE_NAME)
-            .ok_or_else(|| anyhow::anyhow!("Could not resolve key path"))?;
-
-        if !path.exists() {
-            fs::create_dir_all(&path.parent().unwrap())?;
-            File::create(&path)?;
-        }
-
-        fs::write(&path, api_key)
-            .with_context(|| format!("Could not write to '{}'", path.display()))?;
-
-        Ok(())
     }
 }
 

@@ -21,8 +21,7 @@ impl Source for Nexus {
 
         let api_key = setup::resolve_api_key().await?;
 
-        config.api_key = Some(api_key);
-        config.save()?;
+        config.update(|c| c.api_key = Some(api_key));
 
         println!(
             "\n{}\n{}",
@@ -36,10 +35,15 @@ impl Source for Nexus {
 
         setup::configure_nxm_link_handler()?;
 
+        println!(
+            "\n{}\n",
+            "Succesfully set up Nexus mods source!".cyan().bold()
+        );
+
         Ok(())
     }
 
-    fn bundle_info_for(bundle_uid: u64) -> anyhow::Result<crate::bundles::types::Bundle> {
+    fn bundle_info_for(bundle_uid: u64) -> anyhow::Result<crate::bundles::bundle::Bundle> {
         todo!()
     }
 }

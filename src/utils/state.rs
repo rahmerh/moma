@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use anyhow::{Context, bail};
 
-use crate::games::Game;
+use crate::games::game::Game;
 
 pub const DEFAULT_STATE_FILE_PATH: &str = "/tmp/moma_state";
 

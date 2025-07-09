@@ -10,10 +10,9 @@ use std::{
 };
 
 use crate::{
-    games::Game,
-    sources::Source,
+    games::game::Game,
     ui::prompt,
-    utils::{fs::ExpandTilde, os::permissions, state},
+    utils::{fs::ExpandTilde, state},
 };
 
 pub const CACHE_DIR_NAME: &str = ".cache";
@@ -40,9 +39,6 @@ pub struct GameConfig {
 
     /// Environment variables to be set before game launch
     pub env: Option<HashMap<String, String>>,
-
-    /// All sources to be used to get mods for this game
-    pub sources: Vec<Source>,
 }
 
 impl GameConfig {
@@ -95,7 +91,7 @@ impl Config {
         self.games.get(game.id()).ok_or_else(|| anyhow::anyhow!(""))
     }
 
-    pub fn add_game_config(&mut self, game_config: GameConfig) -> anyhow::Result<()> {
+    pub fn add_game(&mut self, game_config: GameConfig) -> anyhow::Result<()> {
         self.games
             .insert(game_config.game.id().to_string(), game_config);
         self.save()
@@ -114,10 +110,6 @@ impl Config {
     }
 
     fn save(&self) -> anyhow::Result<()> {
-        if permissions::is_process_root() {
-            bail!("Cannot run this function as sudo.")
-        }
-
         let path = match Self::resolve_config_file_path("config.toml") {
             Some(path) => path,
             None => bail!("Failed to resolve config path"),

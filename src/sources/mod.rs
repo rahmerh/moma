@@ -1,4 +1,4 @@
-use crate::bundles::types::Bundle;
+use crate::bundles::bundle::Bundle;
 
 pub mod nexus;
 

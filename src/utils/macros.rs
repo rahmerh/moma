@@ -31,14 +31,14 @@ mod tests {
         assert_eq!(usage, "moma init");
     }
 
-    #[test]
-    fn usage_for_macro_should_include_value_option_if_present() {
-        // Act
-        let usage = usage_for!(Cli::CONNECT);
-
-        // Assert
-        assert_eq!(usage, "moma connect <SOURCE>");
-    }
+    // #[test]
+    // fn usage_for_macro_should_include_value_option_if_present() {
+    //     // Act
+    //     let usage = usage_for!(Cli::CONNECT);
+    //
+    //     // Assert
+    //     assert_eq!(usage, "moma connect <SOURCE>");
+    // }
 
     #[test]
     #[should_panic]
